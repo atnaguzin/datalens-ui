@@ -23,7 +23,7 @@ import {UserMenu} from '../UserMenu/UserMenu';
 import {Settings as SettingsPanel} from './Settings/Settings';
 import {DIALOG_RELEASE_VERSION} from './VersionDialog/VersionDialog';
 
-import defaultLogoIcon from '../../assets/icons/logo.svg';
+import defaultLogoIcon from '../../assets/icons/logo-sc.svg';
 import iconCollection from '../../assets/icons/mono-collection.svg';
 
 import './AsideHeaderAdapter.scss';
