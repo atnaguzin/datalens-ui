@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {ArrowRightFromSquare, CircleQuestion, Gear, Sliders, Persons, ListCheckm, Tags} from '@gravity-ui/icons';
+import {ArrowRightFromSquare, CircleQuestion, Gear, Sliders, Persons, ListCheck, Tags} from '@gravity-ui/icons';
 import type {AsideHeaderProps, AsideHeaderTopAlertProps, MenuItem} from '@gravity-ui/navigation';
 import {AsideHeader, FooterItem} from '@gravity-ui/navigation';
 import type {IconData} from '@gravity-ui/uikit';
@@ -19,7 +19,7 @@ import type {AsideHeaderData} from '../../store/typings/asideHeader';
 
 import {Settings as SettingsPanel} from './Settings/Settings';
 
-import defaultLogoIcon from '../../assets/icons/logo.svg';
+import defaultLogoIcon from '../../assets/icons/logo-sc.svg';
 import iconCollection from '../../assets/icons/mono-collection.svg';
 
 import './AsideHeaderAdapter.scss';

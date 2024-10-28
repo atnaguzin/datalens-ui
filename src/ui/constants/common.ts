@@ -283,7 +283,7 @@ export const DATALENS_LIGHT_HC_THEME_MONACO = 'vs-hc-datalens';
 export const DATALENS_DARK_THEME_MONACO = 'vs-dark-datalens';
 export const DATALENS_DARK_HC_THEME_MONACO = 'vs-dark-hc-datalens';
 
-export const PRODUCT_NAME = 'DataLens';
+export const PRODUCT_NAME = 'BI СЦ';
 
 export const PERMISSION = {
     READ: DlsAcl.View,
