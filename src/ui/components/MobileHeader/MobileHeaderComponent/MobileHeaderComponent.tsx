@@ -15,7 +15,7 @@ import {UserAvatar} from '../../UserMenu/UserAvatar';
 import {BurgerMenuFooter} from './BurgerMenuFooter/BurgerMenuFooter';
 import {UserPanel} from './UserPanel/UserPanel';
 
-import defaultLogoIcon from 'ui/assets/icons/logo.svg';
+import defaultLogoIcon from 'ui/assets/icons/logo-sc.svg';
 import iconCollection from 'ui/assets/icons/mono-collection.svg';
 
 import '../MobileHeader.scss';
