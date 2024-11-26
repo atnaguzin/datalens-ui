@@ -9,6 +9,7 @@ import {
     SERVICE_USER_ACCESS_TOKEN_HEADER,
     SuperuserHeader,
     TENANT_ID_HEADER,
+    RPC_AUTHORIZATION
 } from '../../shared';
 import {SERVICE_NAME_DATALENS, errorBooster} from '../components';
 
@@ -25,8 +26,10 @@ export default {
     expressTrustProxyNumber: 2,
     errorBooster,
     workers: (process.env.WORKERS && parseInt(process.env.WORKERS)) || 1,
-    fetchingTimeout: 95 * 1000,
-    singleFetchingTimeout: 95 * 1000,
+    python: process.env.PYTHON || 'python3',
+    fetchingTimeout: ((process.env.FETCHING_TIMEOUT_SEC && parseInt(process.env.FETCHING_TIMEOUT_SEC)) || 95) * 1000,
+    singleFetchingTimeout: ((process.env.FETCHING_TIMEOUT_SEC && parseInt(process.env.FETCHING_TIMEOUT_SEC)) || 95) * 1000,
+    flatTableRowsLimit: ((process.env.FLAT_TABLE_ROWS_LIMIT && parseInt(process.env.FLAT_TABLE_ROWS_LIMIT)) || 100000),
     faviconUrl: '/favicon.ico',
     appMode: process.env.APP_MODE,
     serviceName: SERVICE_NAME_DATALENS,
@@ -34,6 +37,7 @@ export default {
         ...DEFAULT_PROXY_HEADERS,
         PROJECT_ID_HEADER,
         TENANT_ID_HEADER,
+        RPC_AUTHORIZATION,
         SuperuserHeader.XDlAllowSuperuser,
         SuperuserHeader.XDlSudo,
         AuthHeader.Authorization,

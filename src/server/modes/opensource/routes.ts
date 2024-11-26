@@ -8,6 +8,8 @@ import {isChartsMode, isDatalensMode, isFullMode} from '../../app-env';
 import type {ChartsEngine} from '../../components/charts-engine';
 import {getZitadelRoutes} from '../../components/zitadel/routes';
 import {ping} from '../../controllers/ping';
+import {exportEntries} from '../../controllers/export-entries';
+import {printEntry} from '../../controllers/print-entry';
 import {getConnectorIconsMiddleware} from '../../middlewares';
 import type {ExtendedAppRouteDescription} from '../../types/controllers';
 import {getConfiguredRoute} from '../../utils/routes';
@@ -33,6 +35,18 @@ export function getRoutes({
             route: 'GET /ping',
             handler: ping,
             authPolicy: AuthPolicy.disabled,
+        },
+        exportDash: {
+            beforeAuth: beforeAuth,
+            afterAuth: afterAuth,
+            route: 'POST /export-entries',
+            handler: exportEntries
+        },
+        printEntry: {
+            beforeAuth: beforeAuth,
+            afterAuth: afterAuth,
+            route: 'POST /print-entry',
+            handler: printEntry
         },
     };
 

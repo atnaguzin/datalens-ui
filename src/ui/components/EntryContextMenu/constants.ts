@@ -8,6 +8,7 @@ import {
     Link,
     Tag,
     TrashBin,
+    LockOpen
 } from '@gravity-ui/icons';
 import type {ConnectorType} from 'shared/constants/connections';
 import {ActionPanelEntryContextMenuQa} from 'shared/constants/qa/action-panel';
@@ -32,7 +33,9 @@ export const ENTRY_CONTEXT_MENU_ACTION = {
     SHARE: 'share',
     REVISIONS: 'revisions',
     MIGRATE_TO_WORKBOOK: 'migrate-to-workbook',
-    SHOW_RELATED_ENTITIES: 'show-related-entities',
+    CLAIMS: 'claims',
+    EMBED: 'embed',
+    SHOW_RELATED_ENTITIES: 'show-related-entities'
 };
 
 const CONTEXT_MENU_COPY = {
@@ -81,11 +84,11 @@ const isVisibleEntryContextShareItem = ({entry, showSpecificItems}: ContextMenuP
     showSpecificItems &&
     Utils.isEnabledFeature(Feature.EnableEntryMenuItemShare);
 
-export const getEntryContextMenu = (): ContextMenuItem[] => {
-    const {getTopLevelEntryScopes, getAllEntryScopes, getEntryScopesWithRevisionsList} =
-        registry.common.functions.getAll();
+    export const getEntryContextMenu = (): ContextMenuItem[] => {
+        const {getTopLevelEntryScopes, getAllEntryScopes, getEntryScopesWithRevisionsList} =
+            registry.common.functions.getAll();
 
-    return [
+        return [
         {
             id: ENTRY_CONTEXT_MENU_ACTION.REVISIONS,
             action: ENTRY_CONTEXT_MENU_ACTION.REVISIONS,
@@ -98,8 +101,21 @@ export const getEntryContextMenu = (): ContextMenuItem[] => {
             isOnEditMode: false,
             isVisible({entry, isLimitedView}: ContextMenuParams) {
                 if (!entry || !entry.scope || isLimitedView) return false;
-
                 return getEntryScopesWithRevisionsList().includes(entry.scope as EntryScope);
+            },
+        },
+        {
+            id: ENTRY_CONTEXT_MENU_ACTION.CLAIMS,
+            action: ENTRY_CONTEXT_MENU_ACTION.CLAIMS,
+            icon: LockOpen,
+            text: 'value_access',
+            qa: 'value_access',
+            enable: (entry: any) => { return !entry || entry.permissions.edit },
+            scopes: getAllEntryScopes(),
+            // isSpecific: true,
+            // isOnEditMode: false,
+            isVisible() {
+                return true;
             },
         },
         {
@@ -197,13 +213,21 @@ export const getEntryContextMenu = (): ContextMenuItem[] => {
                 }
 
                 return CONTEXT_MENU_COPY.isVisible(args);
-            },
+            }
         },
         {
             ...CONTEXT_MENU_COPY,
             scopes: [EntryScope.Dataset],
             permissions: {admin: true, edit: true, read: false, execute: false},
             isStrictPermissions: true, // strict check with disallow when there are no permissions object
+        },
+        {
+            id: ENTRY_CONTEXT_MENU_ACTION.EMBED,
+            action: ENTRY_CONTEXT_MENU_ACTION.EMBED,
+            icon: ArrowShapeTurnUpRight,
+            text: 'value_embed',
+            enable: () => true,
+            scopes: getAllEntryScopes()
         },
         getContextMenuAccess(),
         {
@@ -225,6 +249,23 @@ export const getEntryContextMenu = (): ContextMenuItem[] => {
             isVisible: isVisibleEntryContextShareItem,
         },
         {
+            id: ENTRY_CONTEXT_MENU_ACTION.SHARE,
+            action: ENTRY_CONTEXT_MENU_ACTION.SHARE,
+            icon: ArrowShapeTurnUpRight,
+            text: 'value_share',
+            enable: () => true,
+            scopes: getAllEntryScopes(),
+            isVisible: isVisibleEntryContextShareItem,
+        },
+        // {
+        //     id: ENTRY_CONTEXT_MENU_ACTION.SHOW_RELATED_ENTITIES,
+        //     action: ENTRY_CONTEXT_MENU_ACTION.SHOW_RELATED_ENTITIES,
+        //     icon: CodeTrunk,
+        //     text: 'value_show-related-entities',
+        //     enable: () => Utils.isEnabledFeature(Feature.RelatedEntitiesList),
+        //     scopes: OBJECT_SCOPES,
+        // },
+        {
             id: ENTRY_CONTEXT_MENU_ACTION.SHOW_RELATED_ENTITIES,
             action: ENTRY_CONTEXT_MENU_ACTION.SHOW_RELATED_ENTITIES,
             icon: CodeTrunk,
@@ -238,6 +279,6 @@ export const getEntryContextMenu = (): ContextMenuItem[] => {
             ],
         },
         ...getAdditionalEntryContextMenuItems(),
-        getContextMenuMoveToWorkbooks(),
+        getContextMenuMoveToWorkbooks()
     ];
 };

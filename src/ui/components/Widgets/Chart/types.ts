@@ -62,6 +62,11 @@ type ChartKitBaseWrapperProps = ChartsProps & {
         dataProvider: ChartKitDataProvider,
     ) => void;
 
+    /**
+     * will be awaited before commiting load event
+     */
+    onBeforeChartLoad?: () => Promise<void>;
+
     onChange?: (data: OnChangeData) => void;
     transformLoadedData?: (data: LoadedWidgetData) => LoadedWidgetData;
 
@@ -280,6 +285,7 @@ export type ChartContentProps = Pick<
         initialParams: StringParams;
         enableActionParams?: boolean;
         rootNodeRef: React.RefObject<HTMLDivElement | null>;
+        backgroundColor?: string;
     };
 
 export type WidgetDataRef = React.MutableRefObject<

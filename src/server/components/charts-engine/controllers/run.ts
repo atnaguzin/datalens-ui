@@ -5,13 +5,13 @@ import type {Request, Response} from '@gravity-ui/expresskit';
 import {isObject} from 'lodash';
 
 import type {ChartsEngine} from '..';
-import {Feature, isEnabledServerFeature} from '../../../../shared';
+import {isEnabledServerFeature} from '../../../../shared';
 import {DeveloperModeCheckStatus} from '../../../../shared/types';
-import {registry} from '../../../registry';
 import Utils from '../../../utils';
 import {resolveConfig} from '../components/storage';
 import type {ResolveConfigError, ResolveConfigProps} from '../components/storage/base';
 import {getDuration} from '../components/utils';
+import { US } from '../../sdk';
 
 type RunControllerExtraSettings = {
     storageApiPath?: string;
@@ -24,7 +24,7 @@ export const runController = (
 ) => {
     return function chartsRunController(req: Request, res: Response) {
         const {ctx} = req;
-        const app = registry.getApp();
+        //const app = registry.getApp();
 
         // We need it because of timeout error after 120 seconds
         // https://forum.nginx.org/read.php?2,214230,214239#msg-214239
@@ -96,67 +96,85 @@ export const runController = (
         ctx.log('CHARTS_ENGINE_LOADING_CONFIG', {key, id});
 
         Promise.resolve(configPromise)
-            .catch((err: unknown) => {
-                const error: ResolveConfigError =
-                    isObject(err) && 'message' in err ? (err as Error) : new Error(err as string);
-                const result: {
-                    error: {
-                        code: string;
-                        details: {
-                            code: number | null;
-                            entryId: string;
-                        };
-                        debug?: {
-                            message: unknown;
-                        };
+        .catch((err: unknown) => {
+            const error: ResolveConfigError =
+                isObject(err) && 'message' in err ? (err as Error) : new Error(err as string);
+            const result: {
+                error: {
+                    code: string;
+                    details: {
+                        code: number | null;
+                        entryId: string;
                     };
-                } = {
-                    error: {
-                        code: 'ERR.CHARTS.CONFIG_LOADING_ERROR',
-                        details: {
-                            code: (error.response && error.response.status) || error.status || null,
-                            entryId: id,
-                        },
-                        debug: {
-                            message: error.message,
-                        },
-                    },
+                    debug?: {
+                        message: unknown;
+                    };
                 };
+            } = {
+                error: {
+                    code: 'ERR.CHARTS.CONFIG_LOADING_ERROR',
+                    details: {
+                        code: (error.response && error.response.status) || error.status || null,
+                        entryId: id,
+                    },
+                    debug: {
+                        message: error.message,
+                    },
+                },
+            };
 
-                // TODO use ShowChartsEngineDebugInfo flag
-                if (ctx.config.appInstallation !== 'internal') {
-                    delete result.error.debug;
-                }
+            // TODO use ShowChartsEngineDebugInfo flag
+            if (ctx.config.appInstallation !== 'internal') {
+                delete result.error.debug;
+            }
 
-                ctx.logError(`CHARTS_ENGINE_CONFIG_LOADING_ERROR "${key || id}"`, error);
-                const status = (error.response && error.response.status) || error.status || 500;
-                res.status(status).send(result);
-            })
-            .then(async (config) => {
-                if (!config) {
-                    return null;
-                }
+            ctx.logError(`CHARTS_ENGINE_CONFIG_LOADING_ERROR "${key || id}"`, error);
+            const status = (error.response && error.response.status) || error.status || 500;
+            res.status(status).send(result);
+        })
+        .then(async (config) => {
+            if (!config) {
+                return null;
+            }
 
-                const configResolving = getDuration(hrStart);
-                const configType = config && config.meta && config.meta.stype;
+            const configResolving = getDuration(hrStart);
+            const configType = config && config.meta && config.meta.stype;
 
-                ctx.log('CHARTS_ENGINE_CONFIG_TYPE', {configType});
+            ctx.log('CHARTS_ENGINE_CONFIG_TYPE', {configType});
 
-                if (expectedType && expectedType !== configType) {
-                    ctx.log('CHARTS_ENGINE_CONFIG_TYPE_MISMATCH');
-                    return res.status(400).send({
-                        error: `Config type "${configType}" does not match expected type "${expectedType}"`,
-                    });
-                }
-
-                const runnerFound = chartsEngine.runners.find((runner) => {
-                    return runner.trigger.has(configType);
+            if (expectedType && expectedType !== configType) {
+                ctx.log('CHARTS_ENGINE_CONFIG_TYPE_MISMATCH');
+                return res.status(400).send({
+                    error: `Config type "${configType}" does not match expected type "${expectedType}"`,
                 });
+            }
 
-                if (!runnerFound) {
-                    ctx.log('CHARTS_ENGINE_UNKNOWN_CONFIG_TYPE', {configType});
+            const runnerFound = chartsEngine.runners.find((runner) => {
+                return runner.trigger.has(configType);
+            });
+
+            if (!runnerFound) {
+                ctx.log('CHARTS_ENGINE_UNKNOWN_CONFIG_TYPE', {configType});
+                return res.status(400).send({
+                    error: `Unknown config type ${configType}`,
+                });
+            }
+
+            if (
+                !isEnabledServerFeature(ctx, 'EnableChartEditor') &&
+                runnerFound.name === 'editor'
+            ) {
+                ctx.log('CHARTS_ENGINE_EDITOR_DISABLED');
+                return res.status(400).send({
+                    error: 'ChartEditor is disabled',
+                });
+            }
+
+            if (req.body.config) {
+                if (!chartsEngine.config.allowBodyConfig && !runnerFound.safeConfig) {
+                    ctx.log('UNSAFE_CONFIG_OVERRIDE');
                     return res.status(400).send({
-                        error: `Unknown config type ${configType}`,
+                        error: `It is forbidden to pass config in body for "${configType}"`,
                     });
                 }
 
@@ -165,64 +183,66 @@ export const runController = (
                     !isEnabledServerFeature(ctx, 'EnableChartEditor') &&
                     runnerFound.name === 'editor'
                 ) {
-                    ctx.log('CHARTS_ENGINE_EDITOR_DISABLED');
-                    return res.status(400).send({
-                        error: 'ChartEditor is disabled',
+                    const {checkRequestForDeveloperModeAccess} = req.ctx.get('gateway');
+                    const checkResult = await checkRequestForDeveloperModeAccess({
+                        ctx: req.ctx,
                     });
-                }
 
-                if (req.body.config) {
-                    if (!chartsEngine.config.allowBodyConfig && !runnerFound.safeConfig) {
-                        ctx.log('UNSAFE_CONFIG_OVERRIDE');
-                        return res.status(400).send({
-                            error: `It is forbidden to pass config in body for "${configType}"`,
-                        });
-                    }
-
-                    if (
-                        isEnabledServerFeature(app.nodekit.ctx, Feature.ShouldCheckEditorAccess) &&
-                        runnerFound.name === 'editor'
-                    ) {
-                        const {checkRequestForDeveloperModeAccess} = req.ctx.get('gateway');
-                        const checkResult = await checkRequestForDeveloperModeAccess({
-                            ctx: req.ctx,
-                        });
-
-                        if (checkResult === DeveloperModeCheckStatus.Forbidden) {
-                            return res.status(403).send({
-                                error: {
-                                    code: 403,
-                                    details: {
-                                        message: 'Access to ChartEditor developer mode was denied',
-                                    },
+                    if (checkResult === DeveloperModeCheckStatus.Forbidden) {
+                        return res.status(403).send({
+                            error: {
+                                code: 403,
+                                details: {
+                                    message: 'Access to ChartEditor developer mode was denied',
                                 },
-                            });
-                        }
+                            },
+                        });
+                    }
+                }
+            }
+
+            if (req.body.config) {
+                res.locals.editMode = true;
+            }
+
+            req.body.config = config;
+
+            req.body.key = req.body.key || config.key;
+
+            var currentUser = await US.universalService({
+                "action": "datalens", 
+                "method": "currentUser", 
+                "data": [{}]
+            }, req.headers, req.ctx);
+
+            if(!currentUser.err) {
+                var params = req.body.params;
+                for(var i in params) {
+                    if(i.startsWith('__')) {
+                        delete req.body.params[i];
                     }
                 }
 
-                if (req.body.config) {
-                    res.locals.editMode = true;
-                }
+                // подставляем идентификатор текущего пользователя
+                req.body.params['__user_id'] = currentUser.data[0].id;
+                // подставляем признак "внедрения"
+                req.body.params['__embed'] = currentUser.data[0].isEmbed == true ? 1 : -1;
+            }
 
-                req.body.config = config;
-
-                req.body.key = req.body.key || config.key;
-
-                return runnerFound.handler(ctx, {
-                    chartsEngine,
-                    req,
-                    res,
-                    config,
-                    configResolving,
-                    workbookId,
-                });
-            })
-            .catch((error) => {
-                ctx.logError('CHARTS_ENGINE_RUNNER_ERROR', error);
-                res.status(500).send({
-                    error: 'Internal error',
-                });
+            return runnerFound.handler(ctx, {
+                chartsEngine,
+                req,
+                res,
+                config,
+                configResolving,
+                workbookId,
             });
+        })
+        .catch((error) => {
+            ctx.logError('CHARTS_ENGINE_RUNNER_ERROR', error);
+            res.status(500).send({
+                error: 'Internal error',
+            });
+        });
     };
 };

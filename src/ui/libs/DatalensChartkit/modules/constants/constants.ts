@@ -29,6 +29,7 @@ export const LINE_BREAKS_OPTIONS = {
 export const EXPORT_FORMATS = {
     XLSX: 'xlsx',
     CSV: 'csv',
+    ODS: 'ods',
     MARKDOWN: 'markdown',
     WIKI: 'wiki',
     SCREENSHOT: 'screenshort',
@@ -42,5 +43,6 @@ export const CLICK_ACTION_TYPE = {
 };
 
 export const REQUEST_ID_HEADER = 'x-request-id';
+export const RPC_AUTHORIZATION = 'x-rpc-authorization';
 export const TRACE_ID_HEADER = 'x-trace-id';
 export const SERVER_TRACE_ID_HEADER = 'x-server-trace-id';

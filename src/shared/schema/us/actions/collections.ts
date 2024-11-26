@@ -39,8 +39,8 @@ export const collectionsActions = {
     createCollection: createAction<CreateCollectionResponse, CreateCollectionArgs>({
         method: 'POST',
         path: () => COLLECTIONS_PATH_PREFIX,
-        params: ({title, description, parentId}, headers) => ({
-            body: {title, description, parentId},
+        params: ({title, project, description, parentId}, headers) => ({
+            body: {title, project, description, parentId},
             headers,
         }),
     }),
@@ -102,9 +102,10 @@ export const collectionsActions = {
     updateCollection: createAction<UpdateCollectionResponse, UpdateCollectionArgs>({
         method: 'POST',
         path: ({collectionId}) => `${COLLECTIONS_PATH_PREFIX}/${collectionId}/update`,
-        params: ({title, description}, headers) => ({
+        params: ({title, project, description}, headers) => ({
             body: {
                 title,
+                project,
                 description,
             },
             headers,

@@ -20,6 +20,7 @@ export const enum TabQueryQA {
 
 export const enum TabParamsQA {
     ParamName = 'param-name',
+    ParamLabel = 'param-label',
     AddParamBtn = 'add-param-btn',
     ParamType = 'param-type',
     OpenParamDialogBtn = 'open-param-dialog-btn',

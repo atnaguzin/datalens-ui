@@ -16,7 +16,7 @@ const mockedBuildSourceArgsSet = {
     query: 'select built_year, iznos from public.sample where built_year in {{years}} limit 10',
     params: {years: '1995'},
     paramsDescription: [
-        {type: 'string', name: 'years', defaultValue: ['1990', '1995'], overridenValue: '1995'},
+        {type: 'string', label: '', name: 'years', defaultValue: ['1990', '1995'], overridenValue: '1995'},
     ],
 };
 
@@ -35,7 +35,7 @@ const mockedBuildSourceArgsSingle = {
     query: 'select built_year, iznos from public.sample where built_year = {{years}} limit 10',
     params: {years: '1995'},
     paramsDescription: [
-        {type: 'string', name: 'years', defaultValue: ['1990', '1995'], overridenValue: '1995'},
+        {type: 'string', label: '', name: 'years', defaultValue: ['1990', '1995'], overridenValue: '1995'},
     ],
 };
 
@@ -54,7 +54,7 @@ const mockedBuildSourceArgsPrewrapped = {
     query: 'select built_year, iznos from public.sample where built_year in ({{years}}) limit 10',
     params: {years: '1995'},
     paramsDescription: [
-        {type: 'string', name: 'years', defaultValue: ['1990', '1995'], overridenValue: '1995'},
+        {type: 'string', label: '', name: 'years', defaultValue: ['1990', '1995'], overridenValue: '1995'},
     ],
 };
 

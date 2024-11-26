@@ -204,11 +204,24 @@ export type DLGlobalData = {
           }
         | boolean;
     runEndpoint?: string;
+    apiPrefix?: string;
     docPathName?: DocPathName;
     chartkitSettings?: ChartkitGlobalSettings;
     extraPalettes?: Record<string, Palette>;
     headersMap?: Record<string, string>;
     isZitadelEnabled?: boolean;
+    oidc?: boolean;
+    oidc_name?: string;
+    oidc_base_url?: string;
+    oidc_2?: boolean;
+    oidc_name_2?: string;
+    oidc_base_url_2?: string;
+    oidc_3?: boolean;
+    oidc_name_3?: string;
+    oidc_base_url_3?: string;
+    oidc_4?: boolean;
+    oidc_name_4?: string;
+    oidc_base_url_4?: string;
     hideNavigation?: boolean;
     connectorIcons?: ConnectorIconData[];
 } & MainLayoutConfigData;
@@ -257,7 +270,7 @@ export interface Entry {
     entryId: string;
     key: string;
     scope: EntryScope;
-    type: EntryType;
+    type: EntryType | string;
     data: EntryData;
     links: Dictionary<string>;
     meta: object;
@@ -278,6 +291,7 @@ export type EntryType = '' | WidgetType;
 export interface EntryReadParams {
     revId?: string;
     includePermissions: string;
+    includePermissionsInfo?: string;
     includeLinks: string;
     branch?: string;
 }

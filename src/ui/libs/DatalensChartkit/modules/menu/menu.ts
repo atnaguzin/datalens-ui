@@ -9,6 +9,7 @@ import type {GetChartkitMenuByType} from 'ui/registry/units/chart/types/function
 
 import {getChartkitMenuItems} from '../../menu/Menu';
 import URI from '../uri/uri';
+//import Utils from 'ui/utils';
 
 export function isChartkitMenuItemVisible() {
     const wizardNewChartPathnames = ['/wizard/new', '/wizard/', '/wizard'];
@@ -36,6 +37,11 @@ export const getChartkitMenuByType = (props?: GetChartkitMenuByType) => {
 
     const isEditVisible = isEditAvaible === undefined ? {} : {isVisible: () => isEditAvaible};
 
+    /*const isEditVisible = isEditAvaible === undefined ? {} : {isVisible: () => { 
+        var decodedString = atob(Utils.getRpcAuthorization());
+        return 'manager' == decodedString.split(':')[0];
+    }};*/
+
     return getChartkitMenuItems({
         type,
         config,
@@ -47,6 +53,7 @@ export const getChartkitMenuByType = (props?: GetChartkitMenuByType) => {
                 action: ({propsData: {id, params}}) => {
                     window.open(`/preview/${id}?${stringify(params)}`);
                 },
+                isVisible: () => type != 'preview'
             },
             [MenuItemsIds.OPEN_AS_TABLE]: {
                 action: ({propsData: {id, params}}) => {
@@ -58,9 +65,6 @@ export const getChartkitMenuByType = (props?: GetChartkitMenuByType) => {
             },
             [MenuItemsIds.EDIT]: {
                 title: i18n('dash.chartkit-menu.view', 'button_edit'),
-                action: ({propsData: {id, params}}) => {
-                    window.open(`/navigate/${id}?${stringify(params)}`);
-                },
                 ...isEditVisible,
             },
             [MenuItemsIds.EXPORT]: {
@@ -68,6 +72,9 @@ export const getChartkitMenuByType = (props?: GetChartkitMenuByType) => {
             },
             [MenuItemsIds.FULLSCREEEN]: {
                 onFullscreenClick,
+            },
+            [MenuItemsIds.GET_LINK]: {
+                isVisible: () => false
             },
             ...customOptions,
         } as GetChartkitMenuByType['customOptions'],

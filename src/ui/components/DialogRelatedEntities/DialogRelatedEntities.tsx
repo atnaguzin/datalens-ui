@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-import {Alert, Dialog, Loader, RadioButton} from '@gravity-ui/uikit';
+import {Alert, Button, Dialog, Loader, RadioButton, Card} from '@gravity-ui/uikit';
 import block from 'bem-cn-lite';
 import {I18n} from 'i18n';
 import isEmpty from 'lodash/isEmpty';
@@ -18,6 +18,7 @@ import {Direction} from './constants';
 import type {DirectionValue} from './constants';
 
 import './DialogRelatedEntities.scss';
+import Utils from 'ui/utils';
 
 const i18n = I18n.keyset('component.dialog-related-entities.view');
 
@@ -45,33 +46,65 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
         null,
     );
     const [relationsCount, setRelationsCount] = React.useState<null | number>(null);
+    const [updatedEntities, setUpdatedEntities] = React.useState<Record<string, boolean>>({});
+    const [accesses, setAccesses] = React.useState<any>([]);
     const {DialogRelatedEntitiesRadioHint} = registry.common.components.getAll();
 
-    React.useEffect(() => {
+    let selectedRelationCount = 0;
+    for (const updatedEntry in updatedEntities) {
+        if (updatedEntities[updatedEntry]) {
+            selectedRelationCount++;
+        }
+    }
+
+    useEffect(()=>{
+        const _updatedEntities: Record<string, boolean> = {};
+        for (const key in relations) {
+            for (const relation in relations[key]) {
+                if (updatedEntities[relations[key][relation].entryId] === undefined) {
+                    _updatedEntities[relations[key][relation].entryId] = false;
+                }
+            }
+        }
+        setUpdatedEntities({...updatedEntities, ..._updatedEntities});
+    }, [relations]);
+
+    const loadAccesses = async () => {
+        const data = await Utils.getAccesses({id: entry.entryId});
+        setAccesses(data);
+    }
+
+    const loadRelations = () => {
         setIsLoading(true);
         setIsError(false);
-        getSdk().cancelRequest(CONCURRENT_ID);
-        getSdk()
-            .mix.getEntryRelations(
-                {
-                    entryId: entry.entryId,
-                    workbookId: entry.workbookId,
-                    direction: currentDirection,
-                },
-                {concurrentId: CONCURRENT_ID},
-            )
-            .then((response) => {
-                setRelationsCount(response.length);
-                setRelations(groupEntitiesByScope(response));
-                setIsLoading(false);
-            })
-            .catch((error) => {
-                if (error.isCancelled) {
-                    return;
-                }
-                setIsError(true);
-                setIsLoading(false);
-            });
+        loadAccesses().finally(()=>{
+            getSdk().cancelRequest(CONCURRENT_ID);
+            getSdk()
+                .mix.getEntryRelations(
+                    {
+                        entryId: entry.entryId,
+                        workbookId: entry.workbookId,
+                        direction: currentDirection,
+                    },
+                    {concurrentId: CONCURRENT_ID},
+                )
+                .then((response) => {
+                    setRelationsCount(response.length);
+                    setRelations(groupEntitiesByScope(response));
+                    setIsLoading(false);
+                })
+                .catch((error) => {
+                    if (error.isCancelled) {
+                        return;
+                    }
+                    setIsError(true);
+                    setIsLoading(false);
+                });
+        });
+    }
+
+    React.useEffect(() => {
+        loadRelations();
     }, [entry, currentDirection]);
 
     const showDirectionControl =
@@ -82,8 +115,51 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
         setCurrentDirection(value);
     };
 
+    const handleRefresh = () => {
+        setUpdatedEntities({});
+        loadRelations();
+    };
+
     const handleClose = () => {
         onClose({status: EntryDialogResolveStatus.Close});
+    };
+    
+    const handleApply = () => {
+        const fullAccesses = [...accesses];
+        setIsLoading(true);
+        Utils.getRoles({}).then((roles)=>{
+            for (const role in roles) {
+                const roleItem = roles[role];
+                if (fullAccesses.findIndex(item=>roleItem.role_id == item.role_id) < 0) {
+                    fullAccesses.push({
+                        role_id: roleItem.role_id, 
+                        add: false,
+                        delete: false,
+                        select: false,
+                        update: false,
+                    });
+                }
+            }
+            const arr = [];
+            for (const entityKey in updatedEntities) {
+                for (const accessKey in fullAccesses) {
+                    const accessItem = fullAccesses[accessKey];
+                    if (updatedEntities[entityKey]) {
+                        arr.push({ id: entityKey, ...accessItem });
+                    }
+                }
+            }
+            Utils.setAccesses([arr.map(item=>({...item, destroy: true}))]).then(()=>{
+                setIsLoading(false);
+                onClose({status: EntryDialogResolveStatus.Close});
+            }).catch(()=>{
+                setIsLoading(false);
+                console.error('Error updating accesses of entities', updatedEntities, fullAccesses);
+            });
+        }).catch(()=>{
+            setIsLoading(false);
+            console.error('Error loading roles');
+        });
     };
 
     const renderRelations = () => {
@@ -128,7 +204,7 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
         }
 
         return Object.entries(relations || []).map(([key, value]) => (
-            <EntitiesList scope={key} entities={value} key={key} />
+            <EntitiesList scope={key} entities={value} key={key} updatedEntities={updatedEntities} setUpdatedEntities={setUpdatedEntities} />
         ));
     };
 
@@ -160,12 +236,47 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
                     </div>
                 )}
                 <div className={b('list')}>{renderRelations()}</div>
-                {showRelationsCount && (
+                {showRelationsCount && (<div>
                     <div
                         className={b('relations-count')}
-                    >{`${i18n('label_entities-count')} ${relationsCount}`}</div>
+                        >{`${i18n('label_entities-count')} ${relationsCount}`}</div>
+                    <div
+                        className={b('relations-count')}
+                        >{`${i18n('label_selected-entities-count')} ${selectedRelationCount}`}</div>
+                    </div>
                 )}
+
+                <Card className={b('warning-card')} theme="warning" size="l">{i18n('selected-entities-assign-description')}</Card>
             </Dialog.Body>
+            <Dialog.Footer>
+                <Button
+                    size="l"
+                    view="outlined"
+                    className={b('refresh-button')}
+                    disabled={isLoading}
+                    onClick={handleRefresh}
+                >
+                    {i18n('refresh')}
+                </Button>
+                <Button
+                    size="l"
+                    view="outlined"
+                    className={b('apply-button')}
+                    disabled={isLoading}
+                    onClick={handleClose}
+                >
+                    {i18n('cancel')}
+                </Button>
+                <Button
+                    size="l"
+                    view="action"
+                    disabled={isLoading}
+                    onClick={handleApply}
+                >
+                    {i18n('apply')}
+                </Button>
+            </Dialog.Footer>
+                
         </Dialog>
     );
 };

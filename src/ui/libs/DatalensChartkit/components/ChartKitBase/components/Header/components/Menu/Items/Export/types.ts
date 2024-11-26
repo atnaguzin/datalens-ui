@@ -8,6 +8,7 @@ import type {WidgetBase} from 'ui/libs/DatalensChartkit/types';
 
 import type {ChartKitProps} from '../../../../../../ChartKitBase';
 import type {LoadedChartInfo} from '../../../../../../types';
+import { Dispatch } from 'redux';
 
 export type ExportResultType = {
     status: string;
@@ -30,11 +31,11 @@ export type ExportActionArgs = {
     widgetDataRef: ChartWidgetDataRef;
     event: React.MouseEvent;
     error?: DatalensChartkitCustomError;
+    dispatch?: Dispatch
 };
 
 export type ExportChartArgs = {
     chartData: ExportActionArgs;
     params?: ExportParams;
-    path?: string;
     onExportLoading?: (isLoading: boolean) => void;
 };

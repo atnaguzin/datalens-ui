@@ -15,7 +15,6 @@ import pick from 'lodash/pick';
 import {useDispatch, useSelector} from 'react-redux';
 import type {StringParams} from 'shared';
 import {setWidgetCurrentTab} from 'ui/units/dash/store/actions/dashTyped';
-import {isEmbeddedEntry} from 'ui/utils/embedded';
 
 import type {ChartKit} from '../../../libs/DatalensChartkit/ChartKit/ChartKit';
 import {getDataProviderData} from '../../../libs/DatalensChartkit/components/ChartKitBase/helpers';
@@ -69,7 +68,7 @@ export const ChartWidget = (props: ChartWidgetProps) => {
         state,
         dataProvider,
         forwardedRef,
-        noControls = isEmbeddedEntry(),
+        noControls,
         nonBodyScroll,
         transformLoadedData,
         splitTooltip,
@@ -541,6 +540,7 @@ export const ChartWidget = (props: ChartWidgetProps) => {
                 hideDebugTool={true}
                 showActionParamsFilter={showActionParamsFilter}
                 onFiltersClear={handleFiltersClear}
+                warning={loadedData?.safeChartInfo}
                 noControls={disableControls}
             />
             <Content
@@ -581,6 +581,7 @@ export const ChartWidget = (props: ChartWidgetProps) => {
                 enableActionParams={enableActionParams}
                 widgetDashState={widgetDashState}
                 rootNodeRef={rootNodeRef}
+                backgroundColor={style?.backgroundColor}
             />
             {Boolean(description || loadedData?.publicAuthor) && (
                 <WidgetFooter

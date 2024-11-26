@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {CircleQuestion, Gear, Sliders} from '@gravity-ui/icons';
+import {ArrowRightFromSquare, CircleQuestion, Gear, Sliders} from '@gravity-ui/icons';
 import type {AsideHeaderProps, AsideHeaderTopAlertProps, MenuItem} from '@gravity-ui/navigation';
 import {AsideHeader, FooterItem} from '@gravity-ui/navigation';
 import type {IconData} from '@gravity-ui/uikit';
@@ -9,15 +9,13 @@ import block from 'bem-cn-lite';
 import {I18n, i18n as baseI18n} from 'i18n';
 import {useDispatch, useSelector} from 'react-redux';
 import {Link, useLocation} from 'react-router-dom';
-import {DlNavigationQA, Feature} from 'shared';
+import {DlNavigationQA, Feature, RPC_AUTHORIZATION} from 'shared';
 import {DL, PRODUCT_NAME} from 'ui/constants';
 import {selectAsideHeaderIsCompact} from 'ui/store/selectors/asideHeader';
 import Utils from 'ui/utils';
 
 import {setAsideHeaderData, updateAsideHeaderIsCompact} from '../../store/actions/asideHeader';
 import type {AsideHeaderData} from '../../store/typings/asideHeader';
-import {UserAvatar} from '../UserMenu/UserAvatar';
-import {UserMenu} from '../UserMenu/UserMenu';
 
 import {Settings as SettingsPanel} from './Settings/Settings';
 
@@ -25,18 +23,22 @@ import defaultLogoIcon from '../../assets/icons/logo.svg';
 import iconCollection from '../../assets/icons/mono-collection.svg';
 
 import './AsideHeaderAdapter.scss';
+import { getSdk } from 'ui/libs/schematic-sdk';
 
 const b = block('dl-aside-header');
 const i18n = I18n.keyset('component.aside-header.view');
 
 const COLLECTIONS_PATH = '/collections';
 const SERVICE_SETTINGS_PATH = '/settings';
+const PROJECTS_PATH = '/admin/projects';
+const ROLES_PATH = '/admin/roles';
+const USERS_PATH = '/admin/users';
 
 const LOGO_DEFAULT_SIZE = 32;
 const FOOTER_ITEM_DEFAULT_SIZE = 18;
 const PROMO_SITE_DOMAIN = 'https://datalens.tech';
 const PROMO_DOC_PATH = '/docs';
-const GITHUB_URL = 'https://github.com/datalens-tech/datalens';
+const GITHUB_URL = 'https://github.com/akrasnov87/datalens';
 
 export const DOCUMENTATION_LINK = `${PROMO_SITE_DOMAIN}${PROMO_DOC_PATH}/${DL.USER_LANG}/`;
 
@@ -44,6 +46,7 @@ export const ITEMS_NAVIGATION_DEFAULT_SIZE = 18;
 
 type AsideHeaderAdapterProps = {
     renderContent?: AsideHeaderProps['renderContent'];
+    superUser?: any;
     logoIcon?: IconData;
 };
 
@@ -101,7 +104,7 @@ const renderDocsItem = (item: DocsItem) => {
     }
 };
 
-export const AsideHeaderAdapter = ({renderContent, logoIcon}: AsideHeaderAdapterProps) => {
+export const AsideHeaderAdapter = ({renderContent, superUser, logoIcon}: AsideHeaderAdapterProps) => {
     const dispatch = useDispatch();
     const {pathname} = useLocation();
     const isCompact = useSelector(selectAsideHeaderIsCompact);
@@ -160,6 +163,31 @@ export const AsideHeaderAdapter = ({renderContent, logoIcon}: AsideHeaderAdapter
                     return getLinkWrapper(makeItem(params), SERVICE_SETTINGS_PATH);
                 },
             },
+            ...(superUser?.isMaster ? [
+            {
+                id: 'users',
+                title: i18n('switch_service-users'),
+                current: pathname.includes(USERS_PATH),
+                itemWrapper: (params: any, makeItem: any) => {
+                    return getLinkWrapper(makeItem(params), USERS_PATH);
+                },
+            },
+            {
+                id: 'projects',
+                title: i18n('switch_service-projects'),
+                current: pathname.includes(PROJECTS_PATH),
+                itemWrapper: (params: any, makeItem: any) => {
+                    return getLinkWrapper(makeItem(params), PROJECTS_PATH);
+                },
+            },
+            {
+                id: 'roles',
+                title: i18n('switch_service-roles'),
+                current: pathname.includes(ROLES_PATH),
+                itemWrapper: (params: any, makeItem: any) => {
+                    return getLinkWrapper(makeItem(params), ROLES_PATH);
+                },
+            }] : [])
         ],
         [pathname],
     );
@@ -170,9 +198,9 @@ export const AsideHeaderAdapter = ({renderContent, logoIcon}: AsideHeaderAdapter
                 id: Panel.Settings,
                 content: <SettingsPanel />,
                 visible: visiblePanel === Panel.Settings,
-            },
+            }
         ],
-        [visiblePanel],
+        [visiblePanel]
     );
 
     const renderFooter = () => {
@@ -238,30 +266,25 @@ export const AsideHeaderAdapter = ({renderContent, logoIcon}: AsideHeaderAdapter
                         );
                     }}
                 />
-                {DL.ZITADEL_ENABLED && (
-                    <FooterItem
-                        compact={isCompact}
-                        item={{
-                            id: PopupName.Account,
-                            itemWrapper: (params, makeItem) =>
-                                makeItem({...params, icon: <UserAvatar size="m" />}),
-                            title: i18n('label_account'),
-                            tooltipText: i18n('label_account'),
-                            current: currentPopup === PopupName.Account,
-                            onItemClick: () => {
-                                setVisiblePanel(undefined);
-                                setCurrentPopup(
-                                    currentPopup === PopupName.Account ? null : PopupName.Account,
-                                );
-                            },
-                        }}
-                        enableTooltip={false}
-                        popupVisible={currentPopup === PopupName.Account}
-                        popupOffset={[0, 8]}
-                        onClosePopup={() => setCurrentPopup(null)}
-                        renderPopupContent={() => <UserMenu />}
-                    />
-                )}
+                <FooterItem
+                    compact={isCompact}
+                    item={{
+                        id: 'logout',
+                        icon: ArrowRightFromSquare,
+                        iconSize: FOOTER_ITEM_DEFAULT_SIZE,
+                        title: superUser.username || superUser.c_login,
+                        tooltipText: i18n('label_logout'),
+                        current: visiblePanel === Panel.Settings,
+                        onItemClick: () => {
+                            localStorage.removeItem('x-rpc-authorization');
+                            getSdk().setDefaultHeader({
+                                name: RPC_AUTHORIZATION,
+                                value: "",
+                            });
+                            window.location.assign('/auth');
+                        }
+                    }}
+                />
             </React.Fragment>
         );
     };

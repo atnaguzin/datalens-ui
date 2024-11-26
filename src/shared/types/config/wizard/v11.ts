@@ -1,3 +1,4 @@
+import type {WidgetSizeType} from '../../..';
 import type {ColorMode} from '../../../constants';
 import type {DatasetFieldCalcMode, ParameterDefaultValue} from '../../dataset';
 import type {
@@ -63,12 +64,14 @@ export interface V11CommonSharedExtraSettings {
     totals?: 'on' | 'off';
     pivotFallback?: 'on' | 'off';
     pivotInlineSort?: 'on' | 'off';
+    stacking?: 'on' | 'off';
     overlap?: 'on' | 'off';
     feed?: string;
     navigatorSettings?: V11NavigatorSettings;
     enableGPTInsights?: boolean;
     labelsPosition?: LabelsPositions;
     pinnedColumns?: number;
+    size?: WidgetSizeType;
 }
 
 export type V11NavigatorSettings = {

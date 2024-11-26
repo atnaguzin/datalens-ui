@@ -21,6 +21,9 @@ import {defaultRowStyle, mobileRowStyle} from '../constants';
 
 import './Row.scss';
 
+import {closeDialog, openDialog} from 'store/actions/dialog';
+import { DIALOG_ASSIGN_CLAIMS } from 'ui/components/OpenDialogAssignClaims/OpenDialogAssignClaims';
+
 const i18n = I18n.keyset('new-workbooks');
 
 type RowProps = {
@@ -72,6 +75,21 @@ const Row: React.FC<RowProps> = ({
             }),
         );
     };
+
+    const onAssignClaims = (item: WorkbookEntry) => {
+        dispatch(
+            openDialog({
+                id: DIALOG_ASSIGN_CLAIMS,
+                props: {
+                    entryId: item.entryId,
+                    workbookId: item.workbookId,
+                    onClose: () => {
+                        dispatch(closeDialog());
+                    },
+                },
+            }),
+        );
+    }
 
     const {ButtonFavorite} = registry.common.components.getAll();
 
@@ -137,6 +155,9 @@ const Row: React.FC<RowProps> = ({
                             <EntryActions
                                 workbook={workbook}
                                 entry={item}
+                                onAssignClaims={() => {
+                                    onAssignClaims(item);
+                                }}
                                 onRenameClick={() => {
                                     onRenameEntry(item);
                                 }}

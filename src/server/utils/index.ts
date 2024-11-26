@@ -13,6 +13,7 @@ import {
     FORWARDED_FOR_HEADER,
     PROJECT_ID_HEADER,
     REQUEST_ID_HEADER,
+    RPC_AUTHORIZATION,
     SERVICE_USER_ACCESS_TOKEN_HEADER,
     SuperuserHeader,
     TENANT_ID_HEADER,
@@ -36,6 +37,7 @@ class Utils {
             folderIdHeader,
             TENANT_ID_HEADER,
             PROJECT_ID_HEADER,
+            RPC_AUTHORIZATION,
             subjectTokenHeader,
         ];
 
@@ -65,14 +67,19 @@ class Utils {
         return pick(headers, FORWARDED_FOR_HEADER);
     }
 
+    static pickRpcAuthorizationHeaders(headers: IncomingHttpHeaders) {
+        return pick(headers, RPC_AUTHORIZATION);
+    }
+
     static pickHeaders(req: Request) {
         return {
             ...Utils.pickAuthHeaders(req.headers, req),
             ...Utils.pickSuperuserHeaders(req.headers),
             ...Utils.pickDlContextHeaders(req.headers),
             ...Utils.pickForwardHeaders(req.headers),
-            ...(req.ctx.config.isZitadelEnabled ? {...Utils.pickZitadelHeaders(req)} : {}),
+            ...Utils.pickRpcAuthorizationHeaders(req.headers),
             [REQUEST_ID_HEADER]: req.id,
+            ...(req.ctx.config.isZitadelEnabled ? {...Utils.pickZitadelHeaders(req)} : {})
         };
     }
 

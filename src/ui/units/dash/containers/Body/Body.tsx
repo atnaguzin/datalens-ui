@@ -58,6 +58,7 @@ import {
     FIXED_HEADER_GROUP_LINE_MAX_ROWS,
 } from 'ui/components/DashKit/constants';
 import {getDashKitMenu} from 'ui/components/DashKit/helpers';
+import {showToast} from 'ui/store/actions/toaster';
 import {selectAsideHeaderIsCompact} from 'ui/store/selectors/asideHeader';
 import {isEmbeddedMode} from 'ui/utils/embedded';
 
@@ -150,6 +151,7 @@ type DashBodyState = {
     fixedHeaderCollapsed: Record<string, boolean>;
     isGlobalDragging: boolean;
     hasCopyInBuffer: CopiedConfigData | null;
+    isExportLoading: boolean;
     loaded: boolean;
     prevMeta: {tabId: string | null; entryId: string | null};
     loadedItemsMap: Map<string, boolean>;
@@ -166,11 +168,12 @@ type MemoContext = {
     isEmbeddedMode?: boolean;
     isPublicMode?: boolean;
     workbookId?: string | null;
-    getPreparedCopyItemOptions?: (
-        itemToCopy: PreparedCopyItemOptions<CopiedConfigContext>,
-    ) => ReturnType<typeof getPreparedCopyItemOptions>;
 };
 type DashkitGroupRenderWithContextProps = DashkitGroupRenderProps & {context: MemoContext};
+
+type GetPreparedCopyItemOptions<T extends object = {}> = (
+    itemToCopy: PreparedCopyItemOptions<T>,
+) => PreparedCopyItemOptions<T>;
 
 const GROUPS_WEIGHT = {
     [FIXED_GROUP_HEADER_ID]: 2,
@@ -248,6 +251,7 @@ class Body extends React.PureComponent<BodyProps> {
         fixedHeaderCollapsed: {},
         isGlobalDragging: false,
         hasCopyInBuffer: null,
+        isExportLoading: false,
         prevMeta: {tabId: null, entryId: null},
         loaded: false,
         loadedItemsMap: new Map<string, boolean>(),
@@ -335,6 +339,16 @@ class Body extends React.PureComponent<BodyProps> {
             this.onStateChange(itemsStateAndParams as TabsHashStates, config as unknown as DashTab);
         } else if (config) {
             this.props.setCurrentTabData(config as unknown as DashTab);
+        }
+    };
+
+    onItemCopy = (error: null | Error) => {
+        if (error === null) {
+            this.props.showToast({
+                name: 'successCopyElement',
+                type: 'success',
+                title: i18n('component.entry-context-menu.view', 'value_copy-success'),
+            });
         }
     };
 
@@ -691,18 +705,8 @@ class Body extends React.PureComponent<BodyProps> {
             memoContext.workbookId !== this.props.workbookId ||
             memoContext.fixedHeaderCollapsed !== isCollapsed
         ) {
-            const fn = (itemToCopy: PreparedCopyItemOptions<CopiedConfigContext>) => {
-                return getPreparedCopyItemOptions(itemToCopy, this.props.tabData, {
-                    workbookId: this.props.workbookId ?? null,
-                    fromScope: this.props.entry.scope,
-                    targetEntryId: this.props.entryId,
-                    targetDashTabId: this.props.tabId,
-                });
-            };
-
             this._memoizedContext = {
                 ...(memoContext || {}),
-                getPreparedCopyItemOptions: memoContext.getPreparedCopyItemOptions || fn,
                 workbookId: this.props.workbookId,
                 fixedHeaderCollapsed: isCollapsed,
                 isEmbeddedMode: isEmbeddedMode(),
@@ -711,6 +715,15 @@ class Body extends React.PureComponent<BodyProps> {
         }
 
         return this._memoizedContext;
+    };
+
+    getPreparedCopyItemOptionsFn = (itemToCopy: PreparedCopyItemOptions<CopiedConfigContext>) => {
+        return getPreparedCopyItemOptions(itemToCopy, this.props.tabData, {
+            workbookId: this.props.workbookId ?? null,
+            fromScope: this.props.entry.scope,
+            targetEntryId: this.props.entryId,
+            targetDashTabId: this.props.tabId,
+        });
     };
 
     getOverlayControls = (): DashKitProps['overlayControls'] => {
@@ -837,7 +850,7 @@ class Body extends React.PureComponent<BodyProps> {
 
         const dashInfo = {
             dashId: entryId || '',
-            tabId: tabId || '',
+            dashTabId: tabId || '',
         };
 
         return {
@@ -858,13 +871,14 @@ class Body extends React.PureComponent<BodyProps> {
             dashkitSettings,
         } = this.props;
 
+        const context = this.getContext();
+
         const tabDataConfig = DL.IS_MOBILE
             ? this.getMobileLayout()
             : (tabData as DashKitProps['config'] | null);
 
         const isEmptyTab = !tabDataConfig?.items.length;
         const DashKit = getConfiguredDashKit();
-
         return isEmptyTab && !isGlobalDragging ? (
             <EmptyState
                 canEdit={this.props.canEdit}
@@ -884,7 +898,12 @@ class Body extends React.PureComponent<BodyProps> {
                 groups={
                     Utils.isEnabledFeature(Feature.EnableDashFixedHeader) ? this.groups : undefined
                 }
-                context={this.getContext()}
+                context={context}
+                getPreparedCopyItemOptions={
+                    this
+                        .getPreparedCopyItemOptionsFn satisfies GetPreparedCopyItemOptions<any> as GetPreparedCopyItemOptions<{}>
+                }
+                onCopyFulfill={this.onItemCopy}
                 onItemEdit={this.props.openItemDialogAndSetData}
                 onChange={this.onChange}
                 settings={dashkitSettings}
@@ -924,6 +943,66 @@ class Body extends React.PureComponent<BodyProps> {
 
             this.setState({loaded: Array.from(loadedItemsMap.values()).every(Boolean)});
         }
+    };
+
+    private exportDashboard = async () => {
+        const links = Object.keys(this.props.entry.links);
+        const result = await Promise.allSettled(
+            links.map((id) =>
+                getSdk().us.getEntry({
+                    entryId: id,
+                    includePermissionsInfo: true,
+                }),
+            ),
+        );
+        const entries = result
+            .filter(({status}) => status === 'fulfilled')
+            .filter((item: any) => ['table_ql_node', 'table_wizard_node'].indexOf(item.value.type) >= 0)
+
+        this.setState({isExportLoading: true});
+        fetch("/export-entries", {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-rpc-authorization': Utils.getRpcAuthorization() 
+            },
+            body: JSON.stringify({
+                "links": entries.map((item: any)=>item.value.entryId),
+                "host": window.location.origin, //getConfig().REPORTS_URL,
+                "formSettings": {
+                    "delNumbers": null,
+                    "delValues": null,
+                    "encoding": null,
+                    "format": "csv"
+                },
+                "lang": "ru",
+                "outputFormat": "xlsx",
+                "exportFilename": "excel",
+                "params": {}
+            })
+        }).then(res => {
+            if (res.status === 200) {
+                return res.blob();
+            } else {
+                return null;
+            }
+        }).then(blob => {
+            if (blob) {
+                var url = window.URL.createObjectURL(blob);
+                const anchorElement = document.createElement('a');
+                document.body.appendChild(anchorElement);
+                anchorElement.style.display = 'none';
+                anchorElement.href = url;
+                anchorElement.download = `${url.split('/').pop()}.xlsx`;
+                anchorElement.click();
+                
+                window.URL.revokeObjectURL(url);
+            } else {
+                this.props.setErrorMode(Error(i18n('dash.main.view', 'export_error')));
+            }
+        }).finally(()=>{
+            this.setState({isExportLoading: false});
+        });
     };
 
     private renderBody() {
@@ -984,6 +1063,15 @@ class Body extends React.PureComponent<BodyProps> {
                         {!settings.hideDashTitle && !DL.IS_MOBILE && (
                             <div className={b('entry-name')} data-qa={DashEntryQa.EntryName}>
                                 {Utils.getEntryNameFromKey(this.props.entry?.key)}
+                                {showEditActionPanel ? null : <Button
+                                    className={b('export-button')}
+                                    onClick={this.exportDashboard}
+                                    loading={this.state.isExportLoading}
+                                    view="action"
+                                    size="m"
+                                >
+                                    {i18n('dash.main.view', 'export')}
+                                </Button>}
                             </div>
                         )}
                         {!settings.hideTabs && <Tabs />}
@@ -1046,6 +1134,7 @@ const mapDispatchToProps = {
     closeDialogRelations,
     setNewRelations,
     openDialog,
+    showToast,
 };
 
 export default compose<BodyProps, OwnProps>(

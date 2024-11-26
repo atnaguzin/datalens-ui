@@ -461,15 +461,17 @@ export function getSources(connectionId, workbookId) {
                 {connectionId, workbookId, limit: 10000},
                 {concurrentId: 'getSources', timeout: TIMEOUT_65_SEC},
             );
+            
+
             const freeformSources = result.freeform_sources;
             sources = result.sources;
 
             const templates = freeformSources.length ? freeformSources[0] : null;
             // TODO[2]: tear off the filter after - BI-1603
-            const list = sources.filter(
+            var list = sources.filter(
                 ({source_type: sourceType}) => !SUBSELECT_SOURCE_TYPES.includes(sourceType),
             );
-
+            
             dispatch(
                 addAvatarPrototypes({
                     templates,

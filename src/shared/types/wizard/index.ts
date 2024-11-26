@@ -9,6 +9,7 @@ import type {
     ServerCommonSharedExtraSettings,
     ServerDatasetField,
     ServerTooltipConfig,
+    WidgetSizeType,
 } from '../';
 import type {
     ColorMode,
@@ -118,6 +119,8 @@ export interface CommonSharedExtraSettings {
     labelsPosition?: LabelsPositions;
     qlAutoExecuteChart?: 'on' | 'off';
     pinnedColumns?: number;
+    stacking?: 'on' | 'off';
+    size?: WidgetSizeType;
 }
 
 interface CommonShared {

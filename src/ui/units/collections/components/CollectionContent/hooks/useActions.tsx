@@ -31,7 +31,8 @@ import {closeDialog, openDialog} from '../../../../../store/actions/dialog';
 import Utils from '../../../../../utils';
 import {WORKBOOKS_PATH} from '../../../../collections-navigation/constants';
 import {deleteCollectionInItems, deleteWorkbookInItems} from '../../../store/actions';
-
+import {DIALOG_ASSIGN_CLAIMS} from 'ui/components/OpenDialogAssignClaims/OpenDialogAssignClaims';
+        
 const i18n = I18n.keyset('collections');
 
 type UseActionsArgs = {
@@ -64,6 +65,7 @@ export const useActions = ({fetchStructureItems, onCloseMoveDialog}: UseActionsA
                                     open: true,
                                     collectionId: item.collectionId,
                                     title: item.title,
+                                    project: item.projectId,
                                     description: item?.description ?? '',
                                     onApply: (collection: UpdateCollectionResponse | null) => {
                                         if (collection) {
@@ -115,6 +117,27 @@ export const useActions = ({fetchStructureItems, onCloseMoveDialog}: UseActionsA
                                     resourceTitle: item.title,
                                     parentId: item.parentId,
                                     canUpdate: item.permissions.updateAccessBindings,
+                                    onClose: () => {
+                                        dispatch(closeDialog());
+                                    },
+                                },
+                            }),
+                        );
+                    },
+                });
+            }
+
+            if (item.permissions.listAccessBindings) {
+                actions.push({
+                    text: <DropdownAction icon={LockOpen} text={i18n('action_access')} />,
+                    action: () => {
+                        dispatch(
+                            openDialog({
+                                id: DIALOG_ASSIGN_CLAIMS,
+                                props: {
+                                    entryId: "",
+                                    workbookId: "",
+                                    collectionId: item.collectionId,
                                     onClose: () => {
                                         dispatch(closeDialog());
                                     },
@@ -183,6 +206,7 @@ export const useActions = ({fetchStructureItems, onCloseMoveDialog}: UseActionsA
                                         open: true,
                                         workbookId: item.workbookId,
                                         title: item.title,
+                                        project: item.projectId,
                                         description: item?.description ?? '',
                                         onApply: (workbook: UpdateWorkbookResponse | null) => {
                                             if (workbook) {
@@ -260,6 +284,26 @@ export const useActions = ({fetchStructureItems, onCloseMoveDialog}: UseActionsA
                                     resourceTitle: item.title,
                                     parentId: item.collectionId,
                                     canUpdate: item.permissions.updateAccessBindings,
+                                    onClose: () => {
+                                        dispatch(closeDialog());
+                                    },
+                                },
+                            }),
+                        );
+                    },
+                });
+            }
+
+            if (item.permissions.listAccessBindings) {
+                actions.push({
+                    text: <DropdownAction icon={LockOpen} text={i18n('action_access')} />,
+                    action: () => {
+                        dispatch(
+                            openDialog({
+                                id: DIALOG_ASSIGN_CLAIMS,
+                                props: {
+                                    entryId: "",
+                                    workbookId: item.workbookId,
                                     onClose: () => {
                                         dispatch(closeDialog());
                                     },

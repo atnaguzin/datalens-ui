@@ -21,7 +21,7 @@ import {registry} from 'ui/registry';
 import type {ChartWidgetDataRef} from '../../../components/Widgets/Chart/types';
 import Utils from '../../../utils';
 import {CHARTKIT_WIDGET_TYPE} from '../ChartKit/components/Widget/Widget';
-import {getExportItem} from '../components/ChartKitBase/components/Header/components/Menu/Items/Export/Export';
+import {getExportItem, getExportPDF} from '../components/ChartKitBase/components/Header/components/Menu/Items/Export/Export';
 import Inspector from '../components/ChartKitBase/components/Header/components/Menu/Items/Inspector/Inspector';
 import type {ChartKitDataProvider} from '../components/ChartKitBase/types';
 import ChartKitIcon from '../components/ChartKitIcon/ChartKitIcon';
@@ -56,6 +56,8 @@ export type MenuCommentsItemVisibleArgs = {
 };
 
 export const getExportMenuItem = getExportItem;
+
+export const getExportMenuPDF = getExportPDF;
 
 export const getInspectorMenuItem: () => MenuItemConfig = Inspector;
 
@@ -137,7 +139,7 @@ export const getNewWindowMenuItem = ({
             className={ICONS_MENU_DEFAULT_CLASSNAME}
         />
     ),
-    isVisible: () => true,
+    isVisible: () => { return customConfig?.isVisible ? customConfig.isVisible() : true },
     action:
         customConfig?.action ||
         (({loadedData, propsData, chartsDataProvider: dataProvider}) => {
@@ -176,7 +178,11 @@ export const getEditMenuItem = ({
             window.open(
                 (dataProvider || chartsDataProvider)?.getGoAwayLink(
                     {loadedData, propsData},
-                    {idPrefix: '/navigation/'},
+                    {
+                        idPrefix: Utils.isEnabledFeature(Feature.UseNavigation)
+                            ? '/navigation/'
+                            : '/navigate/',
+                    },
                 ),
             );
         }),
@@ -237,7 +243,7 @@ export const getLinkMenuItem = (customConfig?: Partial<MenuItemConfig>): MenuIte
             className={ICONS_MENU_DEFAULT_CLASSNAME}
         />
     ),
-    isVisible: ({loadedData}: MenuItemArgs) => Boolean(loadedData?.type),
+    isVisible: ({loadedData}: MenuItemArgs) => { return customConfig?.isVisible ? customConfig?.isVisible() : Boolean(loadedData?.type) },
     action:
         customConfig?.action ||
         function action({loadedData, propsData}) {

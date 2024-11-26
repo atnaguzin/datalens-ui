@@ -45,7 +45,7 @@ import type {
     Widget,
 } from '../../../types';
 import axiosInstance, {initConcurrencyManager} from '../../axios/axios';
-import {REQUEST_ID_HEADER, TRACE_ID_HEADER, URL_OPTIONS} from '../../constants/constants';
+import {REQUEST_ID_HEADER, RPC_AUTHORIZATION, TRACE_ID_HEADER, URL_OPTIONS} from '../../constants/constants';
 import type {ExtraParams} from '../../datalens-chartkit-custom-error/datalens-chartkit-custom-error';
 import DatalensChartkitCustomError, {
     ERROR_CODE,
@@ -530,7 +530,7 @@ class ChartsDataProvider implements DataProvider<ChartsProps, ChartsData, Cancel
     }
 
     private settings: Settings = {
-        endpoint: DL.ENDPOINTS.chartkitDefault,
+        endpoint: '/',
         lang: 'ru',
         noRetry: false,
     };
@@ -719,8 +719,12 @@ class ChartsDataProvider implements DataProvider<ChartsProps, ChartsData, Cancel
             const dataParams = requestOptions.data.params;
 
             Object.entries(dataParams).forEach(([paramKey, paramValue]) => {
-                dataParams[paramKey] =
-                    Array.isArray(paramValue) && paramValue.length < 1 ? [''] : paramValue;
+                if(paramKey.startsWith('__')) {
+                    dataParams[paramKey] = '';
+                } else {
+                    dataParams[paramKey] =
+                        Array.isArray(paramValue) && paramValue.length < 1 ? [''] : paramValue;
+                }
             });
         }
 
@@ -732,9 +736,12 @@ class ChartsDataProvider implements DataProvider<ChartsProps, ChartsData, Cancel
             headers[DL_EMBED_TOKEN_HEADER] = getSecureEmbeddingToken();
         }
 
+        // TODO: use only api prefix
+        const url = DL.API_PREFIX ? `${DL.API_PREFIX}/run` : DL.RUN_ENDPOINT;
+
         return axiosInstance(
             this.prepareRequestConfig({
-                url: `${this.requestEndpoint}${DL.RUN_ENDPOINT}`,
+                url: `${this.requestEndpoint}${url}`,
                 method: 'post',
                 ...requestOptions,
                 headers,
@@ -773,6 +780,10 @@ class ChartsDataProvider implements DataProvider<ChartsProps, ChartsData, Cancel
         };
         if (Utils.isEnabledFeature(Feature.UseComponentHeader)) {
             headers[DL_COMPONENT_HEADER] = DlComponentHeader.UI;
+        }
+
+        if(Utils.getRpcAuthorization()) {
+            headers[RPC_AUTHORIZATION] = Utils.getRpcAuthorization();
         }
 
         return headers;
@@ -852,6 +863,10 @@ class ChartsDataProvider implements DataProvider<ChartsProps, ChartsData, Cancel
 
             if (headers[TRACE_ID_HEADER]) {
                 responseData.traceId = headers[TRACE_ID_HEADER];
+            }
+
+            if(headers[RPC_AUTHORIZATION]) {
+                responseData.rpcAuthorization = headers[RPC_AUTHORIZATION]
             }
 
             if (this.settings.includeUnresolvedParams) {

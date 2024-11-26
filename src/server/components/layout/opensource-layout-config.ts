@@ -23,7 +23,7 @@ export const getOpensourceLayoutConfig: GetLayoutConfig = async (args) => {
     const allowLanguages = (regionalEnvConfig?.allowLanguages || FALLBACK_LANGUAGES) as Language[];
 
     const cookie = req.cookies[USER_SETTINGS_KEY];
-    let lang = Language.En;
+    let lang = Language.Ru;
     let theme;
     try {
         const preparedCookie = JSON.parse(cookie);
@@ -35,7 +35,7 @@ export const getOpensourceLayoutConfig: GetLayoutConfig = async (args) => {
 
     const isAllowed = allowLanguages.includes(lang || '');
     if (!isAllowed) {
-        lang = Language.En;
+        lang = Language.Ru;
     }
 
     const isZitadelEnabled = req.ctx.config.isZitadelEnabled;
@@ -69,6 +69,18 @@ export const getOpensourceLayoutConfig: GetLayoutConfig = async (args) => {
         allowLanguages,
         headersMap: req.ctx.config.headersMap,
         isZitadelEnabled,
+        oidc: req.ctx.config.oidc,
+        oidc_name: req.ctx.config.oidc_name,
+        oidc_base_url: req.ctx.config.oidc_base_url,
+        oidc_2: req.ctx.config.oidc_2,
+        oidc_name_2: req.ctx.config.oidc_name_2,
+        oidc_base_url_2: req.ctx.config.oidc_base_url_2,
+        oidc_3: req.ctx.config.oidc_3,
+        oidc_name_3: req.ctx.config.oidc_name_3,
+        oidc_base_url_3: req.ctx.config.oidc_base_url_3,
+        oidc_4: req.ctx.config.oidc_4,
+        oidc_name_4: req.ctx.config.oidc_name_4,
+        oidc_base_url_4: req.ctx.config.oidc_base_url_4,
         ymapApiKey: config.chartkitSettings?.yandexMap?.token,
         connectorIcons: res.locals.connectorIcons,
         ...appLayoutSettings.DL,
@@ -88,7 +100,7 @@ export const getOpensourceLayoutConfig: GetLayoutConfig = async (args) => {
             {
                 href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
                 rel: 'stylesheet',
-            },
+            }
         ],
         pluginsOptions: {
             layout: {name: appLayoutSettings.bundleName},

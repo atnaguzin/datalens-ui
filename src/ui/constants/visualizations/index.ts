@@ -97,6 +97,7 @@ export const SETTINGS = {
         IGNORE: AxisNullsMode.Ignore,
         CONNECT: AxisNullsMode.Connect,
         AS_ZERO: AxisNullsMode.AsZero,
+        USE_PREVIOUS: AxisNullsMode.UsePrevious,
     },
     HOLIDAYS: {
         ON: 'on',
@@ -166,6 +167,10 @@ export const CHART_SETTINGS = {
         OFF: 'off',
     },
     PIVOT_INLINE_SORT: {
+        ON: 'on',
+        OFF: 'off',
+    },
+    STACKING: {
         ON: 'on',
         OFF: 'off',
     },

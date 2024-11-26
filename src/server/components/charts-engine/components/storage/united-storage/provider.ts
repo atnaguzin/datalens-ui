@@ -20,11 +20,13 @@ import {
     TENANT_ID_HEADER,
     TRACE_ID_HEADER,
     US_PUBLIC_API_TOKEN_HEADER,
+    RPC_AUTHORIZATION,
     WORKBOOK_ID_HEADER,
 } from '../../../../../../shared';
-import {ErrorCode, TIMEOUT_10_SEC} from '../../../../../../shared/constants';
+import {ErrorCode} from '../../../../../../shared/constants';
 import {createErrorHandler} from '../../error-handler';
 import {getDuration} from '../../utils';
+import { unitedStorageConfigLoadedTimeout } from '../../../../../app-env';
 import type {ChartEntryData, DashEntryData, EmbeddingInfo} from '../types';
 
 const handleError = createErrorHandler({
@@ -43,6 +45,7 @@ axiosRetry(axios, {
 });
 
 const ENTRY_NOT_FOUND = 'ENTRY_NOT_FOUND';
+const TEN_SECONDS = unitedStorageConfigLoadedTimeout;
 const PASSED_PROPERTIES: (keyof Entry)[] = [
     'entryId',
     'data',
@@ -117,6 +120,8 @@ const PASSED_HEADERS = [
     DL_EMBED_TOKEN_HEADER,
 
     DL_COMPONENT_HEADER,
+
+    RPC_AUTHORIZATION
 ];
 
 const DEFAULT_MAX_BODY_LENGTH = 15 * 1024 * 1024; // 100 MB
@@ -291,7 +296,7 @@ export class USProvider {
             method: 'get',
             headers: injectMetadata(formattedHeaders, ctx),
             params,
-            timeout: TIMEOUT_10_SEC,
+            timeout: TEN_SECONDS,
         };
 
         return axios
@@ -365,7 +370,7 @@ export class USProvider {
             method: 'get',
             headers: injectMetadata(formattedHeaders, ctx),
             params,
-            timeout: TIMEOUT_10_SEC,
+            timeout: TEN_SECONDS,
         };
 
         return axios
@@ -417,7 +422,7 @@ export class USProvider {
             url: `${storageEndpoint}/v1/embedded-entry`,
             method: 'get',
             headers: injectMetadata(formattedHeaders, ctx),
-            timeout: TIMEOUT_10_SEC,
+            timeout: TEN_SECONDS,
         };
 
         return axios
@@ -475,7 +480,7 @@ export class USProvider {
             url: `${storageEndpoint}/embeds/entries/${id}`,
             method: 'get',
             headers: injectMetadata(formattedHeaders, ctx),
-            timeout: TIMEOUT_10_SEC,
+            timeout: TEN_SECONDS,
         };
 
         return axios
@@ -567,7 +572,7 @@ export class USProvider {
             method: 'post',
             headers: injectMetadata(formattedHeaders, ctx),
             data: postedData,
-            timeout: TIMEOUT_10_SEC,
+            timeout: TEN_SECONDS,
             maxBodyLength: DEFAULT_MAX_BODY_LENGTH,
             maxContentLength: DEFAULT_MAX_CONTENT_LENGTH,
         };
@@ -652,7 +657,7 @@ export class USProvider {
             method: 'post',
             headers: injectMetadata(formattedHeaders, ctx),
             data: postedData,
-            timeout: TIMEOUT_10_SEC,
+            timeout: TEN_SECONDS,
             maxBodyLength: DEFAULT_MAX_BODY_LENGTH,
             maxContentLength: DEFAULT_MAX_CONTENT_LENGTH,
         };
@@ -694,7 +699,7 @@ export class USProvider {
             url: `${storageEndpoint}/v1/entries/${id}`,
             method: 'delete',
             headers: injectMetadata(formattedHeaders, ctx),
-            timeout: TIMEOUT_10_SEC,
+            timeout: TEN_SECONDS,
         };
 
         return axios

@@ -2,6 +2,7 @@ import React from 'react';
 
 import {Portal} from '@gravity-ui/uikit';
 import block from 'bem-cn-lite';
+import type {WidgetSizeType} from 'shared';
 
 import {COMPONENT_CLASSNAME} from '../../../../../../../../components/Widgets/Chart/helpers/helpers';
 import {waitForContent} from '../../../../../helpers/wait-for-content';
@@ -18,7 +19,9 @@ const b = block('dl-table');
 type Props = {
     dimensions: WidgetDimensions;
     data: TableViewData;
+    size: WidgetSizeType;
     onChangeMinWidth?: (cellSizes: number[]) => void;
+    width?: 'auto' | 'max-content';
 };
 
 export const BackgroundTable = React.memo<Props>((props: Props) => {
@@ -26,6 +29,8 @@ export const BackgroundTable = React.memo<Props>((props: Props) => {
         dimensions,
         data: {header, body, footer},
         onChangeMinWidth,
+        size,
+        width,
     } = props;
 
     const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -66,11 +71,11 @@ export const BackgroundTable = React.memo<Props>((props: Props) => {
     return (
         <Portal>
             <div
-                className={b('background-table', COMPONENT_CLASSNAME)}
+                className={b('background-table', {size}, COMPONENT_CLASSNAME)}
                 style={{height: dimensions?.height, width: dimensions?.width}}
                 ref={containerRef}
             >
-                <table className={b({prepared: false})} ref={tableRef}>
+                <table className={b({prepared: false})} ref={tableRef} style={{width}}>
                     <TableHead rows={header.rows} />
                     <TableBody rows={body.rows} />
                     <TableFooter rows={footer.rows} />

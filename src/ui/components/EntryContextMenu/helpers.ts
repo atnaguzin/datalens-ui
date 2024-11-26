@@ -194,6 +194,7 @@ type EntryContextMenuIDTypeBase =
     | 'duplicate'
     | 'edit'
     | 'copy-link'
+    | 'claims'
     | 'tableOfContent'
     | 'settings'
     | 'fullscreen'
@@ -203,6 +204,7 @@ type EntryContextMenuIDTypeBase =
     | 'materialization'
     | 'revisions'
     | 'migrate-to-workbook'
+    | 'embed'
     | 'show-related-entities';
 
 export type EntryContextMenuIDType<T = unknown> = unknown extends T
@@ -239,7 +241,7 @@ export type EntryContextMenuItem<T = unknown> = {
 // In the Dropdown component, menu groups are formed as Array<Array<Item>>, so the config has the same structure
 // Widget config only (on dashboard, preview, visard, etc.)
 const MENU_GROUP_CONFIG: Array<Array<MenuItemsIds>> = [
-    [MenuItemsIds.FULLSCREEEN, MenuItemsIds.EXPORT, MenuItemsIds.OPEN_AS_TABLE],
+    [MenuItemsIds.FULLSCREEEN, MenuItemsIds.EXPORT, MenuItemsIds.EXPORT_PDF, MenuItemsIds.OPEN_AS_TABLE],
     [MenuItemsIds.MOVE, MenuItemsIds.DUPLICATE, MenuItemsIds.COPY],
     [MenuItemsIds.NEW_WINDOW, MenuItemsIds.GET_LINK],
     [MenuItemsIds.SOURCE, MenuItemsIds.INSPECTOR, MenuItemsIds.ALERTS],
@@ -256,7 +258,7 @@ const ENTRY_MENU_GROUP_CONFIG: Array<Array<EntryContextMenuIDType>> = [
     ['rename', 'move', 'duplicate', 'copy'],
     ['tableOfContent', 'fullscreen'],
     ['sql', 'materialization'],
-    ['access', 'show-related-entities', 'copy-link', 'public', 'sql-to-monitoring'],
+    ['access', 'show-related-entities', 'copy-link', 'claims', 'public', 'sql-to-monitoring', 'embed'],
     ['edit', 'settings'],
     ['migrate-to-workbook'],
     ['delete'],

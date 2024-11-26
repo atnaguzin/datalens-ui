@@ -22,7 +22,7 @@ export type Collection = {
     title: string;
     description: string | null;
     parentId: string | null;
-    projectId: string | null;
+    projectId?: string;
     tenantId: string;
     createdBy: string;
     createdAt: string;
@@ -46,6 +46,7 @@ export type GetRootCollectionPermissionsResponse = {
 
 export type CreateCollectionArgs = {
     title: string;
+    project?: string;
     description?: string;
     parentId: string | null;
 };
@@ -119,6 +120,7 @@ export type DeleteCollectionsResponse = {
 export type UpdateCollectionArgs = {
     collectionId: string;
     title?: string;
+    project?: string;
     description?: string;
 };
 

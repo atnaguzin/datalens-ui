@@ -27,22 +27,22 @@ import {DownloadCsv} from '../DownloadCsv/DownloadCsv';
 
 import {setLoadingToast, updateLoadingToast} from './ToastContent/ToastContent';
 import type {ExportActionArgs, ExportChartArgs, ExportResultType} from './types';
-import {getFileName, isExportVisible, setErrorToast, setSuccessToast} from './utils';
+import {getFileName, isExportPdfVisible, isExportVisible, setErrorToast, setSuccessToast} from './utils';
+import { closeDialog, openDialog } from 'ui/store/actions/dialog';
+import { DIALOG_EXPORT_PDF } from './ExportDialog';
 
 const i18n = I18n.keyset('chartkit.menu.export');
 
 const toaster = new Toaster();
 
-const getExportResult = async ({chartData, params, path}: ExportChartArgs) => {
+const getExportResult = async ({chartData, params}: ExportChartArgs) => {
     const {widgetDataRef, loadedData, widget} = chartData;
 
     const fileName = getFileName(loadedData.key);
     const exportName = `${fileName}.${params?.format}`;
-
     const exportResult = (await exportWidget({
         widgetDataRef: widgetDataRef?.current,
         widget: widgetDataRef?.current || widget,
-        path,
         data: loadedData.data,
         widgetType: loadedData.type,
         options: params,
@@ -59,8 +59,8 @@ const getExportResult = async ({chartData, params, path}: ExportChartArgs) => {
     return exportResult;
 };
 
-const copyData = async ({chartData, params, path}: ExportChartArgs) => {
-    const exportResult = await getExportResult({chartData, path, params});
+const copyData = async ({chartData, params}: ExportChartArgs) => {
+    const exportResult = await getExportResult({chartData, params});
     if (!exportResult) {
         return;
     }
@@ -71,13 +71,13 @@ const copyData = async ({chartData, params, path}: ExportChartArgs) => {
     }
 };
 
-const downloadData = async ({chartData, params, path, onExportLoading}: ExportChartArgs) => {
+const downloadData = async ({chartData, params, onExportLoading}: ExportChartArgs) => {
     const {loadedData} = chartData;
     const fileName = getFileName(loadedData.key) + '.';
     setLoadingToast(fileName, params?.format || '');
     onExportLoading?.(true);
 
-    const exportResult = await getExportResult({chartData, path, params});
+    const exportResult = await getExportResult({chartData, params});
     if (!exportResult) {
         toaster.remove(fileName);
         onExportLoading?.(false);
@@ -124,18 +124,10 @@ const csvExportAction = (
 };
 
 const directExportAction = (
-    chartsDataProvider: ChartKitDataProvider,
     format: ExportFormatsType,
     onExportLoading?: ExportChartArgs['onExportLoading'],
 ) => {
     return async (chartData: ExportActionArgs) => {
-        const {loadedData, propsData} = chartData;
-
-        const path = chartsDataProvider.getGoAwayLink(
-            {loadedData, propsData},
-            {urlPostfix: '/preview', idPrefix: '/editor/'},
-        );
-
         const params = {
             format,
             delValues: null,
@@ -144,10 +136,10 @@ const directExportAction = (
         };
 
         if (format === EXPORT_FORMATS.XLSX) {
-            downloadData({chartData, params, path, onExportLoading});
+            downloadData({chartData, params, onExportLoading});
             return;
         }
-        copyData({chartData, params, path});
+        copyData({chartData, params});
     };
 };
 
@@ -210,7 +202,13 @@ const getSubItems = ({
             isVisible: ({loadedData, error}: MenuItemArgs) =>
                 Utils.isEnabledFeature(Feature.XlsxChartExportEnabled) &&
                 isExportVisible({loadedData, error}),
-            action: directExportAction(chartsDataProvider, EXPORT_FORMATS.XLSX, onExportLoading),
+            action: directExportAction(EXPORT_FORMATS.XLSX, onExportLoading),
+        },
+        {
+            id: MenuItemsIds.EXPORT_ODS,
+            title: i18n('format_ods'),
+            isVisible: ({loadedData, error}: MenuItemArgs) => isExportVisible({loadedData, error}),
+            action: directExportAction(EXPORT_FORMATS.ODS, onExportLoading),
         },
         {
             id: MenuItemsIds.EXPORT_CSV,
@@ -222,14 +220,14 @@ const getSubItems = ({
             id: MenuItemsIds.EXPORT_MARKDOWN,
             title: i18n('format_markdown'),
             isVisible: isExportVisible,
-            action: directExportAction(chartsDataProvider, EXPORT_FORMATS.MARKDOWN),
+            action: directExportAction(EXPORT_FORMATS.MARKDOWN),
         },
         {
             id: MenuItemsIds.EXPORT_WIKI,
             title: i18n('format_wiki'),
             isVisible: ({loadedData, error}: MenuItemArgs) =>
                 Boolean(showWiki) && isExportVisible({loadedData, error}),
-            action: directExportAction(chartsDataProvider, EXPORT_FORMATS.WIKI),
+            action: directExportAction(EXPORT_FORMATS.WIKI),
         },
         {
             id: MenuItemsIds.EXPORT_SCREENSHOT,
@@ -241,6 +239,55 @@ const getSubItems = ({
     ];
 
     return submenuItems;
+};
+
+export const getExportPDF = ({
+    showScreenshot,
+}: {
+    showWiki?: boolean;
+    showScreenshot?: boolean;
+    chartsDataProvider: ChartKitDataProvider;
+    customConfig?: Partial<MenuItemConfig>;
+}): MenuItemConfig => {
+    return {
+        id: MenuItemsIds.EXPORT_PDF,
+        title: ({loadedData, error}: MenuItemArgs) => {
+            return isExportPdfVisible({loadedData, error}) ? i18n('menu-export-pdf') : i18n('menu-screenshot');
+        },
+        icon: ({loadedData, error}: MenuItemArgs) => {
+            const iconData = isExportPdfVisible({loadedData, error}) && !error ? ArrowDownToLine : Picture;
+            return (
+                <Icon
+                    size={ICONS_MENU_DEFAULT_SIZE}
+                    data={iconData}
+                    className={ICONS_MENU_DEFAULT_CLASSNAME}
+                />
+            );
+        },
+        items: [],
+        isVisible: ({loadedData, error}: MenuItemArgs) => {
+            const isExportAllowed = !loadedData?.extra.dataExportForbidden;
+            const isScreenshotVisible = loadedData?.data && showScreenshot;
+    
+            return Boolean(
+                isExportAllowed && (isExportPdfVisible({loadedData, error}) || isScreenshotVisible),
+            );
+        },
+        action: (data: ExportActionArgs) => {
+            const dispatch = data.dispatch;
+            if (dispatch) {
+                dispatch(
+                    openDialog({
+                        id: DIALOG_EXPORT_PDF,
+                        props: {
+                            entryId: data.propsData.id || "",
+                            onClose: ()=> dispatch(closeDialog()),
+                        },
+                    }),
+                );
+            }
+        }
+    }
 };
 
 export const getExportItem = ({

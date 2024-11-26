@@ -58,3 +58,84 @@ Password:
 ```
 demo
 ```
+## Комментарий
+Ключ (токен) для авторизации требуется передать в адресной строке, как `x-rpc-authorization=bW9iaWxlOjEyMzQ1`. Токен защифрован, как кодировка `base64`.
+
+Во все внешние запросы прокидывается дополнительный заголовок: `X-Rpc-Authorization`.
+
+Интерфейс взаимодействует с REST API https://github.com/akrasnov87/datalens-auth.
+
+## Сборка
+<pre>
+docker login -u [username]
+docker build -t akrasnov87/datalens-ui:0.1675.0 .
+docker push akrasnov87/datalens-ui:0.1675.0
+</pre>
+
+## Тестирование
+
+В корне проекта создать файл `.env` и добавить туда строки:
+
+<pre>
+US_ENDPOINT="http://host.docker.internal:8030"
+BI_API_ENDPOINT="http://host.docker.internal:8031"
+BI_DATA_ENDPOINT="http://host.docker.internal:8032"
+HC=1
+PYTHON=python3
+### TEMPLATE SECRETS BEGIN
+APP_MODE=full
+APP_ENV=development
+APP_INSTALLATION=opensource
+APP_DEV_MODE=1
+
+### TEMPLATE SECRETS END
+</pre>
+
+Где:
+* PYTHON - это команда для вызова python, используется для создания `.ods` файла (альтернатива `.xlsx`). По умолчанию хранится `python3` (см. src/server/configs/common.ts)
+
+Выполняем команды:
+<pre>
+npm ci
+npm run dev
+</pre>
+
+### Новые параметры
+
+* FETCHING_TIMEOUT_SEC=600 - таймаут в секундах для выполнения запроса;
+* FLAT_TABLE_ROWS_LIMIT=1000000 - максимальное количество строк для табличных данных;
+* UNITED_STORAGE_CONFIG_LOADED_TIMEOUT=10000 - таймаут на получение информации о связи двух таблиц по связанному ключу, по умолчанию занчение 10000 ms
+
+## Получение последних изменений с главного репозитория yandex
+
+<pre>
+git remote add upstream https://github.com/datalens-tech/datalens-ui.git
+git pull upstream main
+</pre>
+
+## Запуск через vscode
+
+Создаём launch файл
+<pre>
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch via npm",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"]
+        }
+    ]
+}
+</pre>
+
+## Авторы доработки
+
+* Александр Краснов - https://github.com/akrasnov87
+* Кирилл Автономов -  https://github.com/kirillva

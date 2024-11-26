@@ -1,10 +1,10 @@
-import type React from 'react';
-
 import type {DateTimeInput} from '@gravity-ui/date-utils';
 import {dateTimeUtc} from '@gravity-ui/date-utils';
 import type {ColumnDef, SortingFnOption} from '@tanstack/react-table';
 import {createColumnHelper} from '@tanstack/react-table';
 import type {DisplayColumnDef, GroupColumnDef} from '@tanstack/table-core/build/lib/types';
+import {rgb} from 'd3';
+import type {RGBColor} from 'd3';
 import get from 'lodash/get';
 import round from 'lodash/round';
 import type {TableCellsRow, TableCommonCell, TableRow, TableTitle} from 'shared';
@@ -65,6 +65,10 @@ function getSortingFunction(args: {
     return 'auto';
 }
 
+export function getColumnId(headCell: THead) {
+    return `${headCell.id}__${headCell.index}`;
+}
+
 function createColumn(args: {
     headCell: THead;
     rows?: TableRow[];
@@ -73,10 +77,10 @@ function createColumn(args: {
     size?: number;
 }) {
     const {headCell, footerCell, index, size, rows} = args;
-    const {id, width, cell, ...columnOptions} = headCell;
+    const {width, cell, ...columnOptions} = headCell;
     const options = {
         ...columnOptions,
-        id: `${id}__${index}`,
+        id: getColumnId(headCell),
         meta: {
             width,
             footer: footerCell,
@@ -220,8 +224,56 @@ export function getTableSizes(table: HTMLTableElement) {
     }, []);
 }
 
-export function getCellCustomStyle(cellData: unknown): React.CSSProperties {
-    const css = camelCaseCss(get(cellData, 'css', {}));
+export function toSolidColor(current: string | RGBColor, background?: RGBColor) {
+    const bg = background ?? rgb(getPageBgColor());
+    const color = typeof current === 'string' ? rgb(varToColor(current)) : current;
+
+    return color
+        .copy({
+            r: (1 - color.opacity) * bg.r + color.opacity * color.r,
+            g: (1 - color.opacity) * bg.g + color.opacity * color.g,
+            b: (1 - color.opacity) * bg.b + color.opacity * color.b,
+            opacity: 1,
+        })
+        .formatRgb();
+}
+
+function varToColor(value: string) {
+    if (value.startsWith('var(')) {
+        const bodyStyles = window.getComputedStyle(document.body);
+        return bodyStyles.getPropertyValue(value.slice(4, -1));
+    }
+
+    return value;
+}
+
+function getPageBgColor() {
+    return window.getComputedStyle(document.body).getPropertyValue('background-color');
+}
+
+export function getElementBackgroundColor(el?: HTMLElement | null): string {
+    if (!el) {
+        return getPageBgColor();
+    }
+
+    const color = window.getComputedStyle(el).getPropertyValue('background-color');
+    const rgbColor = rgb(color);
+
+    if (el.tagName !== 'BODY') {
+        if (!rgbColor.opacity) {
+            return getElementBackgroundColor(el.parentElement);
+        }
+
+        if (rgbColor.opacity < 1) {
+            return toSolidColor(rgbColor, rgb(getPageBgColor()));
+        }
+    }
+
+    return rgbColor.toString();
+}
+
+export function getCellCustomStyle(cellData: unknown, tableBgColor?: string) {
+    const css = {...camelCaseCss(get(cellData, 'css', {}))};
 
     // Since the table is created with flex/grid instead of standard table layout,
     // some of styles will not work as expected - we replace them here
@@ -235,6 +287,16 @@ export function getCellCustomStyle(cellData: unknown): React.CSSProperties {
                 css.alignItems = 'end';
                 break;
             }
+        }
+    }
+
+    if (css.backgroundColor && tableBgColor) {
+        css.backgroundColor = varToColor(String(css.backgroundColor));
+        const rgbColor = rgb(css.backgroundColor as string);
+        if (rgbColor.opacity < 1) {
+            // Due to special cases like sticky row/column,
+            // we cannot use cell background with alpha chanel - the content begins to "shine through"
+            css.backgroundColor = toSolidColor(rgbColor, rgb(tableBgColor));
         }
     }
 

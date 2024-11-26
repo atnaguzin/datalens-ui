@@ -87,6 +87,34 @@ export interface SharedAppConfig {
 
     serviceClientId?: string;
     serviceClientSecret?: string;
+
+    oidc?: boolean;
+    oidc_issuer?: string;
+    oidc_base_url?: string;
+    oidc_client_id?: string;
+    oidc_secret?: string;
+    oidc_name?: string;
+
+    oidc_2?: boolean;
+    oidc_issuer_2?: string;
+    oidc_base_url_2?: string;
+    oidc_client_id_2?: string;
+    oidc_secret_2?: string;
+    oidc_name_2?: string;
+
+    oidc_3?: boolean;
+    oidc_issuer_3?: string;
+    oidc_base_url_3?: string;
+    oidc_client_id_3?: string;
+    oidc_secret_3?: string;
+    oidc_name_3?: string;
+
+    oidc_4?: boolean;
+    oidc_issuer_4?: string;
+    oidc_base_url_4?: string;
+    oidc_client_id_4?: string;
+    oidc_secret_4?: string;
+    oidc_name_4?: string;
 }
 
 export interface SharedAppDynamicConfig {

@@ -58,6 +58,43 @@ const PATH_PREFIX_V2 = '/v2';
 const PRIVATE_PATH_PREFIX = '/private';
 
 export const entriesActions = {
+    encodeId: createAction<any, any>({
+        method: 'GET',
+        path: (data) => { return `/encodeId?id=${data.id}` },
+        params: (_, headers) => ({
+            headers: {
+                ...headers
+            },
+        }),
+    }),
+    decodeId: createAction<any, any>({
+        method: 'GET',
+        path: (data) => { return `/decodeId?id=${data.id}` },
+        params: (_, headers) => ({
+            headers: {
+                ...headers
+            },
+        }),
+    }),
+    universalService: createAction<any, any>({
+        method: 'POST',
+        path: () => { return `/universal_service` },
+        params: (body, headers) => {
+            return {body, headers};
+        },
+    }),
+
+    getAuth: createAction<any, any>({
+        method: 'GET',
+        path: (data) => { 
+            return `/auth?login=${data.login}&password=${data.password}` 
+        },
+        params: (_, headers) => ({
+            headers: {
+                ...headers
+            },
+        }),
+    }),
     getEntry: createAction<GetEntryResponse, GetEntryArgs>({
         method: 'GET',
         path: ({entryId}) => `${PATH_PREFIX}/entries/${filterUrlFragment(entryId)}`,

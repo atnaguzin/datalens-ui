@@ -6,7 +6,10 @@ ARG NODE_MAJOR=20
 ENV DEBIAN_FRONTEND=noninteractive
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/cert.pem
 
-RUN apt-get update && apt-get -y upgrade
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata
+    #DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
+    #apt-get -y install python3.9 python3-pip
 
 # node
 RUN apt-get -y install ca-certificates curl gnupg
@@ -35,9 +38,9 @@ FROM ubuntu:22.04 AS base-stage
 
 ARG NODE_MAJOR=20
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get -y upgrade
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
+    apt-get -y install python3.9 python3-pip
 
 # node
 RUN apt-get -y install ca-certificates curl gnupg
@@ -83,6 +86,10 @@ RUN rm -rf /etc/nginx/sites-enabled/default
 COPY deploy/nginx /etc/nginx
 COPY deploy/supervisor /etc/supervisor/conf.d
 
+# ставим библиотеки python
+COPY export/requirements.txt /opt/app/export/requirements.txt
+RUN pip install -r /opt/app/export/requirements.txt
+
 # prepare rootless permissions for supervisor and nginx
 ARG USER=app
 RUN chown -R ${USER} /var/log/supervisor/ && \
@@ -97,6 +104,8 @@ ARG app_version
 ENV APP_VERSION=$app_version
 ENV TMPDIR=/tmp
 
+#RUN chown -R ${USER} /opt/app/dist/run
+RUN chown -R ${USER} /opt/app/export 
 WORKDIR /opt/app
 
 COPY package.json package-lock.json /opt/app/

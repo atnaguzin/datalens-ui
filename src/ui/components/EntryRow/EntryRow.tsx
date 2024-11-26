@@ -30,6 +30,7 @@ export type EntryRowProps = {
     rightSectionSlot?: React.ReactNode;
     className?: string;
     enableHover?: boolean;
+    disableHover?: boolean;
     showUndefinedIcon?: boolean;
 } & (RowWithEntry | CustomRow);
 

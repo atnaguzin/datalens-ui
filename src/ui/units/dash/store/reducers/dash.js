@@ -1,25 +1,17 @@
 import {DashKit} from '@gravity-ui/dashkit';
 import {generateUniqId} from '@gravity-ui/dashkit/helpers';
-import {I18n} from 'i18n';
 import update from 'immutability-helper';
 import pick from 'lodash/pick';
-import {DashTabItemControlSourceType, DashTabItemType, Feature, TitlePlacementOption} from 'shared';
-import {extractTypedQueryParams} from 'shared/modules/typed-query-api/helpers/parameters';
-import {getRandomKey} from 'ui/libs/DatalensChartkit/helpers/helpers';
+import {DashTabItemType} from 'shared';
+import {migrateConnectionsForGroupControl} from 'ui/store/utils/controlDialog';
 import {getUpdatedConnections} from 'ui/utils/copyItems';
-import {ELEMENT_TYPE} from 'units/dash/containers/Dialogs/Control/constants';
-import Utils from 'utils';
 
-import {CONTROLS_PLACEMENT_MODE} from '../../../../constants/dialogs';
 import {EMBEDDED_MODE} from '../../../../constants/embedded';
 import {Mode} from '../../modules/constants';
 import {getUniqIdsFromDashData} from '../../modules/helpers';
 import * as actionTypes from '../constants/dashActionTypes';
 
-import {migrateConnectionsForGroupControl} from './controls/helpers';
 import {dashTypedReducer} from './dashTypedReducer';
-
-const i18n = I18n.keyset('dash.store.view');
 
 export const TAB_PROPERTIES = [
     'id',
@@ -61,112 +53,11 @@ const initialState = {
     error: null,
 
     isFullscreenMode: new URLSearchParams(window.location.search).get('mode') === EMBEDDED_MODE.TV,
-    lastUsedDatasetId: null,
-
-    selectorDialog: getSelectorDialogInitialState(),
-    selectorsGroup: getGroupSelectorDialogInitialState(),
-    activeSelectorIndex: 0,
 
     skipReload: false,
+
+    widgetsCurrentTab: {},
 };
-
-export function getGroupSelectorDialogInitialState() {
-    return {
-        autoHeight: false,
-        buttonApply: false,
-        buttonReset: false,
-        updateControlsOnChange: true,
-        group: [],
-    };
-}
-
-export function getSelectorDialogInitialState(args = {}) {
-    const sourceType =
-        Utils.isEnabledFeature(Feature.GroupControls) &&
-        args.openedDialog === DashTabItemType.Control
-            ? DashTabItemControlSourceType.External
-            : DashTabItemControlSourceType.Dataset;
-
-    return {
-        elementType: ELEMENT_TYPE.SELECT,
-        validation: {},
-        sourceType,
-        defaults: {},
-        datasetId: args.lastUsedDatasetId,
-        connectionId: args.lastUsedConnectionId,
-        showTitle: true,
-        titlePlacement: TitlePlacementOption.Left,
-        placementMode: CONTROLS_PLACEMENT_MODE.AUTO,
-        width: '',
-        required: false,
-        showHint: false,
-        draftId: getRandomKey(),
-    };
-}
-
-export function getSelectorDialogFromData(data, defaults) {
-    let selectorParameters;
-
-    switch (data.sourceType) {
-        case DashTabItemControlSourceType.Connection:
-            selectorParameters = extractTypedQueryParams(defaults, data.source.fieldName);
-            break;
-        case DashTabItemControlSourceType.External:
-            selectorParameters = defaults;
-            break;
-        default:
-            selectorParameters = {};
-    }
-
-    return {
-        validation: {},
-        isManualTitle: true,
-
-        defaults,
-
-        title: data.title,
-        sourceType: data.sourceType,
-        autoHeight: data.autoHeight,
-
-        datasetId: data.source.datasetId,
-        connectionId: data.source.connectionId,
-        selectorParameters,
-        connectionQueryType: data.source.connectionQueryType,
-        connectionQueryTypes: data.source.connectionQueryTypes,
-        connectionQueryContent: data.source.connectionQueryContent,
-        elementType: data.source.elementType || ELEMENT_TYPE.SELECT,
-        defaultValue: data.source.defaultValue,
-        datasetFieldId: data.source.datasetFieldId,
-        showTitle: data.source.showTitle,
-        titlePlacement: data.source.titlePlacement,
-        multiselectable: data.source.multiselectable,
-        isRange: data.source.isRange,
-        fieldName: data.source.fieldName,
-        fieldType: data.source.fieldType,
-        datasetFieldType: data.source.datasetFieldType,
-        acceptableValues: data.source.acceptableValues,
-        chartId: data.source.chartId,
-        operation: data.source.operation,
-        innerTitle: data.source.innerTitle,
-        showInnerTitle: data.source.showInnerTitle,
-        required: data.source.required,
-        showHint: data.source.showHint,
-        hint: data.source.hint,
-
-        placementMode: data.placementMode || CONTROLS_PLACEMENT_MODE.AUTO,
-        width: data.width || '',
-
-        id: data.id,
-        namespace: data.namespace,
-    };
-}
-
-export function getSelectorGroupDialogFromData(data) {
-    return {
-        ...data,
-        group: data.group.map((item) => getSelectorDialogFromData(item)),
-    };
-}
 
 // eslint-disable-next-line complexity
 function dash(state = initialState, action) {
@@ -181,40 +72,23 @@ function dash(state = initialState, action) {
         case actionTypes.CLOSE_DIALOG: {
             return {
                 ...state,
-                selectorsGroup: getGroupSelectorDialogInitialState(),
                 ...action.payload,
                 dragOperationProps: null,
             };
         }
-        case actionTypes.OPEN_DIALOG: {
-            const selectorGroup = getGroupSelectorDialogInitialState();
-            const selectorDialog =
-                action.payload?.openedDialog === DashTabItemType.Control ||
-                action.payload?.openedDialog === DashTabItemType.GroupControl
-                    ? getSelectorDialogInitialState({
-                          lastUsedDatasetId: state.lastUsedDatasetId,
-                          lastUsedConnectionId: state.lastUsedConnectionId,
-                          openedDialog: action.payload?.openedDialog,
-                      })
-                    : state.selectorDialog;
-
-            if (
-                Utils.isEnabledFeature(Feature.GroupControls) &&
-                action.payload?.openedDialog === DashTabItemType.GroupControl
-            ) {
-                // TODO: move to getSelectorDialogInitialState after the release of the feature
-                selectorDialog.title = i18n('label_selector-dialog');
-            }
+        case actionTypes.OPEN_ITEM_DIALOG: {
+            const payload = action.payload;
 
             return {
                 ...state,
+                openedItemId: payload.id ?? null,
+                openedDialog: payload.type,
+            };
+        }
+        case actionTypes.OPEN_DIALOG: {
+            return {
+                ...state,
                 ...action.payload,
-                selectorDialog,
-                selectorsGroup: {
-                    ...selectorGroup,
-                    group: [selectorDialog],
-                },
-                activeSelectorIndex: 0,
                 dragOperationProps: action.payload.dragOperationProps ?? null,
             };
         }
@@ -400,7 +274,6 @@ function dash(state = initialState, action) {
                     type: action.payload.type || state.openedDialog,
                     data: action.payload.data,
                     namespace: action.payload.namespace,
-                    operation: action.payload.operation,
                     layout: state.dragOperationProps?.itemLayout,
                     ...(action.payload.defaults ? {defaults: action.payload.defaults} : null),
                 },
@@ -435,42 +308,6 @@ function dash(state = initialState, action) {
                     counter: {$set: tabData.counter},
                 }),
             };
-        }
-        case actionTypes.OPEN_ITEM_DIALOG: {
-            const payload = action.payload;
-            const {id: openedItemId, data, defaults} = payload;
-            let {type: openedDialog} = tab.items.find(({id}) => id === openedItemId);
-
-            const newState = {
-                ...state,
-                openedItemId,
-                activeSelectorIndex: 0,
-            };
-
-            if (
-                Utils.isEnabledFeature(Feature.GroupControls) &&
-                openedDialog === DashTabItemType.Control &&
-                data.sourceType !== 'external'
-            ) {
-                const selectorDialog = getSelectorDialogFromData(data);
-
-                // migration forward to group
-                openedDialog = DashTabItemType.GroupControl;
-                newState.selectorsGroup = {
-                    ...getGroupSelectorDialogInitialState(),
-                    group: [selectorDialog],
-                };
-                newState.selectorDialog = selectorDialog;
-            } else if (openedDialog === DashTabItemType.GroupControl) {
-                newState.selectorsGroup = getSelectorGroupDialogFromData(data);
-                newState.selectorDialog = newState.selectorsGroup.group[0];
-            } else if (openedDialog === DashTabItemType.Control) {
-                newState.selectorDialog = getSelectorDialogFromData(data, defaults);
-            }
-
-            newState.openedDialog = openedDialog;
-
-            return newState;
         }
 
         default:

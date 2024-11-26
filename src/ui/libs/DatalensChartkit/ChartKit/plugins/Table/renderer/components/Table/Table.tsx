@@ -1,9 +1,11 @@
 import React from 'react';
 
+import type {SortingState} from '@tanstack/react-table';
 import block from 'bem-cn-lite';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
-import type {StringParams, TableCell, TableCellsRow, TableCommonCell} from 'shared';
+import {DEFAULT_WIDGET_SIZE} from 'shared';
+import type {StringParams, TableCell, TableCellsRow, TableCommonCell, WidgetSizeType} from 'shared';
 import {BackgroundTable} from 'ui/libs/DatalensChartkit/ChartKit/plugins/Table/renderer/components/Table/BackgroundTable';
 
 import {isMacintosh} from '../../../../../../../../utils';
@@ -42,13 +44,21 @@ type Props = {
     dimensions: WidgetDimensions;
     onChangeParams?: (params: StringParams) => void;
     onReady?: () => void;
+    backgroundColor?: string;
 };
 
 export const Table = React.memo<Props>((props: Props) => {
-    const {dimensions: widgetDimensions, widgetData, onChangeParams, onReady} = props;
+    const {
+        dimensions: widgetDimensions,
+        widgetData,
+        onChangeParams,
+        onReady,
+        backgroundColor,
+    } = props;
     const {config, data: originalData, unresolvedParams, params: currentParams} = widgetData;
     const title = getTableTitle(config);
     const isPaginationEnabled = Boolean(config?.paginator?.enabled);
+    const size: WidgetSizeType = get(config, 'size', DEFAULT_WIDGET_SIZE);
 
     const [cellMinSizes, setCellMinWidth] = React.useState<number[] | null>(null);
 
@@ -122,6 +132,15 @@ export const Table = React.memo<Props>((props: Props) => {
         return {cursor, ...actionParamsCss};
     };
 
+    let initialSortingState: SortingState | undefined;
+    if (config?.sort) {
+        initialSortingState = [
+            {
+                id: config.sort,
+                desc: config?.order === 'desc',
+            },
+        ];
+    }
     const {colgroup, header, body, footer, totalSize} = usePreparedTableData({
         data,
         dimensions: widgetDimensions,
@@ -130,6 +149,8 @@ export const Table = React.memo<Props>((props: Props) => {
         onSortingChange: handleSortingChange,
         getCellAdditionStyles,
         cellMinSizes,
+        sortingState: initialSortingState,
+        backgroundColor,
     });
 
     React.useEffect(() => {
@@ -139,7 +160,11 @@ export const Table = React.memo<Props>((props: Props) => {
     }, [onReady, cellMinSizes]);
 
     const highlightRows = get(config, 'settings.highlightRows') ?? !hasGroups(data.head);
-    const tableActualHeight = useTableHeight({ref: tableRef, ready: Boolean(cellMinSizes)});
+    const tableActualHeight = useTableHeight({
+        ref: tableRef,
+        ready: Boolean(cellMinSizes),
+        totalSize,
+    });
     const noData = !props.widgetData.data?.head?.length;
 
     const handleCellClick = React.useCallback(
@@ -221,7 +246,7 @@ export const Table = React.memo<Props>((props: Props) => {
                 ref={tableContainerRef}
             >
                 <TableTitleView title={title} />
-                <div className={b('table-wrapper', {'highlight-rows': highlightRows})}>
+                <div className={b('table-wrapper', {'highlight-rows': highlightRows, size})}>
                     {noData && (
                         <div className={b('no-data')}>
                             {i18n('chartkit-table', 'message-no-data')}
@@ -240,21 +265,23 @@ export const Table = React.memo<Props>((props: Props) => {
                                     ))}
                                 </colgroup>
                             )}
-                            <TableHead
-                                sticky={true}
-                                rows={header.rows}
-                                style={header.style}
-                                tableHeight={tableActualHeight}
-                            />
                             {cellMinSizes && (
-                                <TableBody
-                                    rows={body.rows}
-                                    style={body.style}
-                                    onCellClick={handleCellClick}
-                                    rowRef={body.rowRef}
-                                />
+                                <React.Fragment>
+                                    <TableHead
+                                        sticky={true}
+                                        rows={header.rows}
+                                        style={header.style}
+                                        tableHeight={tableActualHeight}
+                                    />
+                                    <TableBody
+                                        rows={body.rows}
+                                        style={body.style}
+                                        onCellClick={handleCellClick}
+                                        rowRef={body.rowRef}
+                                    />
+                                    <TableFooter rows={footer.rows} style={footer.style} />
+                                </React.Fragment>
                             )}
-                            <TableFooter rows={footer.rows} style={footer.style} />
                         </table>
                     )}
                 </div>
@@ -277,6 +304,8 @@ export const Table = React.memo<Props>((props: Props) => {
                         setCellMinWidth(colWidths);
                     }
                 }}
+                size={size}
+                width={config?.settings?.width ?? 'auto'}
             />
         </React.Fragment>
     );
