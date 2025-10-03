@@ -25,6 +25,7 @@ export type BuildSourceArgs = {
     actionParams: StringParams;
     widgetConfig?: DashWidgetConfig['widgetConfig'];
     palettes: Record<string, Palette>;
+    features: FeatureConfig;
 };
 
 export type BuildLibraryConfigArgs = {
@@ -55,6 +56,7 @@ export type BuildChartArgs = {
 
     features: FeatureConfig;
     palettes: Record<string, Palette>;
+    defaultColorPaletteId: string;
 };
 
 export type WizardWorker = {

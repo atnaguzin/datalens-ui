@@ -6,6 +6,7 @@ import {EntryScope} from '../../shared';
 import {TransferCapabilities, TransferErrorCode} from '../../shared/constants/workbook-transfer';
 import type {EntryFieldData, EntryFieldLinks} from '../../shared/schema';
 import {Utils} from '../components';
+import {Dash} from '../components/sdk';
 import {
     prepareExportChartData,
     prepareImportChartData,
@@ -130,7 +131,7 @@ export const prepareExportData = async (
             }
 
             const {dash, notifications} = await prepareDashExportData(
-                entry as unknown as DashEntry,
+                Dash.migrateDescription(entry as unknown as DashEntry),
                 idMapping,
             );
 
@@ -266,6 +267,7 @@ export const prepareImportData = async (
                     scope: widget.scope,
                     mode: widget.mode,
                     links: widget.links as EntryFieldLinks,
+                    annotation: widget.annotation,
                 },
                 ctx,
                 authArgs: {usMasterToken},
@@ -281,17 +283,22 @@ export const prepareImportData = async (
                 return createImportResponseData(notifications);
             }
 
+            const {data, annotation} = Dash.migrateDescription(dash);
+
             const {responseData} = await gatewayApi.usPrivate._proxyCreateEntry({
                 headers,
                 args: {
                     workbookId,
-                    data: dash.data as unknown as EntryFieldData,
+                    data: data as unknown as EntryFieldData,
                     key: dash.key,
                     name: dash.name,
                     type: dash.type,
                     scope: dash.scope,
                     mode: dash.mode,
                     links: dash.links,
+                    annotation: {
+                        description: annotation?.description ?? '',
+                    },
                 },
                 ctx,
                 authArgs: {usMasterToken},

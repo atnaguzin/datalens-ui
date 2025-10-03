@@ -20,5 +20,7 @@
   "export": "Export",
   "export_error": "Export to excel failed",
   "tooltip_collapse-fixed-group": "Collapse pinned group",
-  "tooltip_expand-fixed-group": "Expand pinned group"
+  "tooltip_expand-fixed-group": "Expand pinned group",
+  "value_state-limit-error": "Dashboard state not saved",
+  "value_state-limit-error-message": "Too many parameters are configured in the charts. Try reducing the number of selectors or of the values in them."
 }

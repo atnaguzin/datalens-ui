@@ -261,7 +261,7 @@ class Dash {
             };
 
             const createdEntry = (await US.createEntry(
-                usData,
+                Dash.migrateDescriptionForSave(usData),
                 headersWithMetadata,
                 ctx,
             )) as DashEntry & {
@@ -270,7 +270,7 @@ class Dash {
 
             ctx.log('SDK_DASH_CREATE_SUCCESS', US.getLoggedEntry(createdEntry));
 
-            return createdEntry;
+            return Dash.migrateDescriptionForClient(createdEntry);
         } catch (error) {
             ctx.logError('SDK_DASH_CREATE_FAILED', error, US.getLoggedErrorEntry(data));
 
@@ -289,12 +289,9 @@ class Dash {
                 ...headers,
                 ...ctx.getMetadata(),
             };
-            const result = (await US.readEntry(
-                entryId,
-                params,
-                headersWithMetadata,
-                ctx,
-            )) as DashEntry;
+            const result = await US.readEntry(entryId, params, headersWithMetadata, ctx).then(
+                (entry) => Dash.migrateDescriptionForClient(entry as DashEntry),
+            );
 
             const isEnabledServerFeature = ctx.get('isEnabledServerFeature');
             const isServerMigrationEnabled = Boolean(
@@ -316,6 +313,83 @@ class Dash {
 
     static async migrate(data: DashEntry['data']) {
         return DashSchemeConverter.update(data);
+    }
+
+    static migrateDescription<T extends Pick<DashEntry, 'data' | 'annotation'>>(prevEntry: T) {
+        if (prevEntry.data && 'description' in prevEntry.data) {
+            const entry = {
+                ...prevEntry,
+                annotation: {
+                    description: prevEntry.data.description ?? '',
+                },
+            };
+            delete entry.data.description;
+            return entry;
+        }
+
+        return prevEntry;
+    }
+
+    static migrateDescriptionForClient(prevEntry: DashEntry) {
+        if (prevEntry.data && 'description' in prevEntry.data && !prevEntry.annotation) {
+            return {
+                ...prevEntry,
+                annotation: {
+                    description: prevEntry.data.description,
+                },
+            };
+        }
+
+        if (prevEntry.annotation?.description && !prevEntry.data.description) {
+            return {
+                ...prevEntry,
+                data: {
+                    ...prevEntry.data,
+                    description: prevEntry.annotation.description,
+                },
+            };
+        }
+
+        return prevEntry;
+    }
+
+    static migrateDescriptionForSave<T extends Pick<DashEntry, 'data' | 'annotation'>>(
+        prevEntry: T,
+    ) {
+        if (prevEntry.annotation) {
+            return {
+                ...prevEntry,
+                annotation: {
+                    description: prevEntry.annotation.description ?? '',
+                },
+            };
+        }
+
+        if (prevEntry.data && 'description' in prevEntry.data) {
+            const entry = {
+                ...prevEntry,
+                annotation: {
+                    description: prevEntry.data.description ?? '',
+                },
+            };
+            delete entry.data.description;
+
+            return entry;
+        }
+
+        if (prevEntry && 'description' in prevEntry) {
+            const entry = {
+                ...prevEntry,
+                annotation: {
+                    description: prevEntry.description ?? '',
+                },
+            };
+            delete entry.description;
+
+            return entry;
+        }
+
+        return prevEntry;
     }
 
     static async update(
@@ -353,14 +427,14 @@ class Dash {
             const result = (await US.updateEntry(
                 entryId,
                 mode,
-                usData,
+                Dash.migrateDescriptionForSave(usData),
                 headersWithMetadata,
                 ctx,
             )) as DashEntry;
 
             ctx.log('SDK_DASH_UPDATE_SUCCESS', US.getLoggedEntry(result));
 
-            return result;
+            return Dash.migrateDescriptionForClient(result);
         } catch (error) {
             ctx.logError('SDK_DASH_UPDATE_FAILED', error, {
                 entryId,

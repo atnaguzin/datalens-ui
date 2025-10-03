@@ -38,21 +38,6 @@ export enum DialogParameterQA {
     Dialog = 'dialog-parameter',
 }
 
-export enum ConnectionsDialogQA {
-    Apply = 'connections-dialog-apply-button',
-    Cancel = 'connections-dialog-cancel-button',
-    Content = 'connections-dialog-content',
-    EmptyContent = 'connections-dialog-content-empty',
-    ElementSelect = 'connections-dialog-element-select',
-    ElementSelectItems = 'connections-dialog-element-select-items',
-    TypeSelect = 'connections-dialog-type-select',
-    TypeSelectItems = 'connections-dialog-type-select-items',
-    TypeSelectConnectedOption = 'connections-dialog-type-select-connected-option',
-    TypeSelectInputOption = 'connections-dialog-type-select-input-option',
-    TypeSelectOutputOption = 'connections-dialog-type-select-output-option',
-    TypeSelectIgnoreOption = 'connections-dialog-type-select-ignore-option',
-}
-
 export enum AddFieldQA {
     Option = 'add-field-option',
     AddFieldButton = 'add-field-button',
@@ -184,9 +169,9 @@ export const enum DialogCreateWorkbookEntryQa {
 }
 
 export const enum DialogEntryDescriptionQa {
-    Root = 'dialog-dash-meta',
-    SaveButton = 'dash-meta-save-button',
-    EditButton = 'dash-meta-edit-button',
+    Root = 'dialog-entry-description-root',
+    SaveButton = 'dialog-entry-description-save-button',
+    EditButton = 'dialog-entry-description-edit-button',
 }
 
 export const enum CreateEntityButton {

@@ -49,6 +49,7 @@ type DialogRelatedEntitiesProps = EntryDialogProps & {
 };
 
 const CONCURRENT_ID = 'list-related-entities';
+const cancelConcurrentRequest = () => getSdk().cancelRequest(CONCURRENT_ID);
 
 const MENU_DEFAULT_ACTIONS = [CONTEXT_MENU_COPY_LINK, CONTEXT_MENU_COPY_ID];
 
@@ -134,11 +135,11 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
         setAccesses(data);
     }
     
-    const loadRelations = () => {
+    const fetchRelatedEntries = React.useCallback(() => {
         setIsLoading(true);
         setIsError(false);
+        cancelConcurrentRequest();
         loadAccesses().finally(()=>{
-            getSdk().cancelRequest(CONCURRENT_ID);
             getSdk()
                 .sdk.mix.getEntryRelations(
                     {
@@ -160,12 +161,14 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
                     setIsError(true);
                     setIsLoading(false);
                 });
-        });
-    }
+        })
+    }, [entry, currentDirection]);
 
     React.useEffect(() => {
-        loadRelations();
-    }, [entry, currentDirection]);
+        fetchRelatedEntries();
+
+        return () => cancelConcurrentRequest();
+    }, [fetchRelatedEntries]);
 
     const showDirectionControl =
         !topLevelEntryScopes.includes(entry.scope as EntryScope) &&
@@ -177,7 +180,7 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
 
     const handleRefresh = () => {
         setUpdatedEntities({});
-        loadRelations();
+        fetchRelatedEntries();
     };
 
     const handleClose = () => {
@@ -232,12 +235,24 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
         }
 
         if (isError) {
+            const renderRetryAction = () => (
+                <Button
+                    className={b('button-retry')}
+                    size="l"
+                    view="action"
+                    onClick={fetchRelatedEntries}
+                >
+                    {i18n('label_button-retry')}
+                </Button>
+            );
+
             return (
                 <div className={b('error-state')}>
                     <PlaceholderIllustration
                         direction="column"
                         name="error"
                         title={i18n('label_request-error')}
+                        renderAction={renderRetryAction}
                     />
                 </div>
             );

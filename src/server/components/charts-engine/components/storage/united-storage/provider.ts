@@ -6,7 +6,13 @@ import type {AxiosRequestConfig} from 'axios';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
-import type {EntryPublicAuthor, WorkbookId} from '../../../../../../shared';
+import type {
+    EntryAnnotation,
+    EntryAnnotationArgs,
+    EntryPublicAuthor,
+    TenantSettings,
+    WorkbookId,
+} from '../../../../../../shared';
 import {
     AuthHeader,
     DL_COMPONENT_HEADER,
@@ -67,6 +73,8 @@ const PASSED_PROPERTIES: (keyof Entry)[] = [
     'workbookId',
     'servicePlan',
     'tenantFeatures',
+    'tenantSettings',
+    'annotation',
 ];
 
 export type Entry = {
@@ -97,6 +105,8 @@ export type Entry = {
     workbookId?: WorkbookId;
     servicePlan?: string;
     tenantFeatures?: Record<string, unknown>;
+    tenantSettings?: TenantSettings;
+    annotation?: EntryAnnotation;
 };
 
 const PASSED_HEADERS = [
@@ -208,6 +218,7 @@ export type ProviderUpdateParams = {
     meta?: Record<string, string>;
     headers: Request['headers'];
     skipSyncLinks?: boolean;
+    annotation?: EntryAnnotationArgs;
 };
 
 export type ProviderCreateParams = {
@@ -223,6 +234,7 @@ export type ProviderCreateParams = {
     workbookId: string;
     name: string;
     mode?: EntryUpdateMode;
+    annotation?: EntryAnnotationArgs;
 };
 
 function injectMetadata(headers: IncomingHttpHeaders, ctx: AppContext): IncomingHttpHeaders {
@@ -279,9 +291,11 @@ export class USProvider {
             includeServicePlan?: boolean;
             includeTenantFeatures?: boolean;
             includeFavorite?: boolean;
+            includeTenantSettings: boolean;
         } = {
             branch: unreleased ? 'saved' : 'published',
             includeFavorite: true,
+            includeTenantSettings: true,
         };
 
         if (includeServicePlan) {
@@ -444,7 +458,8 @@ export class USProvider {
         const params: {
             includeServicePlan?: boolean;
             includeTenantFeatures?: boolean;
-        } = {};
+            includeTenantSettings: boolean;
+        } = {includeTenantSettings: true};
 
         if (includeServicePlan) {
             params.includeServicePlan = true;
@@ -519,7 +534,8 @@ export class USProvider {
         const params: {
             includeServicePlan?: boolean;
             includeTenantFeatures?: boolean;
-        } = {};
+            includeTenantSettings: boolean;
+        } = {includeTenantSettings: true};
 
         if (includeServicePlan) {
             params.includeServicePlan = true;
@@ -586,6 +602,7 @@ export class USProvider {
             workbookId,
             name,
             mode = EntryUpdateMode.Publish,
+            annotation,
         }: ProviderCreateParams,
     ) {
         const hrStart = process.hrtime();
@@ -602,6 +619,7 @@ export class USProvider {
             name: string;
             includePermissionsInfo?: boolean;
             mode: EntryUpdateMode;
+            annotation?: EntryAnnotationArgs;
         } = {
             key,
             data,
@@ -621,6 +639,11 @@ export class USProvider {
         if (includePermissionsInfo) {
             postedData.includePermissionsInfo = true;
         }
+
+        if (annotation) {
+            postedData.annotation = annotation;
+        }
+
         const formattedHeaders = formatPassedHeaders(headers, ctx);
         const axiosArgs: AxiosRequestConfig = {
             url: `${storageEndpoint}/v1/entries`,
@@ -671,6 +694,7 @@ export class USProvider {
             meta = {},
             headers,
             skipSyncLinks,
+            annotation,
         }: ProviderUpdateParams,
     ) {
         const hrStart = process.hrtime();
@@ -683,6 +707,7 @@ export class USProvider {
             type?: unknown;
             links?: unknown;
             skipSyncLinks?: boolean;
+            annotation?: EntryAnnotationArgs;
         } = {
             mode,
             meta,
@@ -703,9 +728,15 @@ export class USProvider {
         if (links) {
             postedData.links = links;
         }
+
         if (skipSyncLinks) {
             postedData.skipSyncLinks = true;
         }
+
+        if (annotation) {
+            postedData.annotation = annotation;
+        }
+
         const formattedHeaders = formatPassedHeaders(headers, ctx);
         const axiosArgs: AxiosRequestConfig = {
             url: `${storageEndpoint}/v1/entries/${entryId}`,

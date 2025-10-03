@@ -206,6 +206,7 @@ export function preparePieData(args: PrepareFunctionArgs) {
         },
     };
 
+    // eslint-disable-next-line complexity
     const pieData = data.reduce((acc, values) => {
         const dimensionValue = values[dimensionIndex];
         const measureValue = values[measureIndex];
@@ -231,15 +232,17 @@ export function preparePieData(args: PrepareFunctionArgs) {
             formattedNameParts.push(String(getFormattedValue(dimensionValue, dimensionField)));
         }
 
-        const pointName = legendParts.join(': ') || getFakeTitleOrTitle(measure);
+        const pointName = legendParts.length
+            ? legendParts.join(': ')
+            : getFakeTitleOrTitle(measure);
         const drillDownFilterValue = pointName;
-        const shouldWrapPointName = isHtmlColor || isHtmlDimension;
 
         let formattedName: string | WrappedHTML = formattedNameParts.join(': ');
         if (isHtmlColor || isHtmlDimension) {
             formattedName = wrapHtml(formattedName);
         }
 
+        const shouldWrapPointName = isHtmlColor || isHtmlDimension;
         const point: PiePoint = {
             name: shouldWrapPointName ? wrapHtml(pointName) : pointName,
             formattedName,

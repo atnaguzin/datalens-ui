@@ -2,8 +2,6 @@ export enum Feature {
     ChartkitAlerts = 'chartkitAlerts',
     UseConfigurableChartkit = 'UseConfigurableChartkit',
     AsideHeaderEnabled = 'AsideHeaderEnabled',
-    /** Enable redesign of dash controls */
-    DashFloatControls = 'DashFloatControls',
     FieldEditorDocSection = 'FieldEditorDocSection',
     UsePublicDistincts = 'UsePublicDistincts',
     EnablePublishEntry = 'EnablePublishEntry',
@@ -18,7 +16,6 @@ export enum Feature {
     UseComponentHeader = 'UseComponentHeader',
     FetchDocumentation = 'FetchDocumentation',
     Comments = 'Comments',
-    EmptySelector = 'emptySelector',
     // Check access rights when processing ChartEditor charts
     ChartEditorDeveloperModeCheck = 'ChartEditorDeveloperModeCheck',
     QLPrometheus = 'QLPrometheus',
@@ -80,10 +77,6 @@ export enum Feature {
     EnableCustomDashMargins = 'EnableCustomDashMargins',
     /** Enabled Dash elements auto-focus */
     EnableDashAutoFocus = 'EnableDashAutoFocus',
-    /** Enable using template params in datasets sources */
-    EnableDsTemplateParams = 'EnableDsTemplateParams',
-    /** Enable public gallery unit */
-    EnablePublicGallery = 'EnablePublicGallery',
     /** Enable new secure parameters behavior */
     EnableSecureParamsV2 = 'EnableSecureParamsV2',
     /** Enable export settings in connections & datasets */
@@ -102,6 +95,10 @@ export enum Feature {
     GravityChartsForBarYAndScatter = 'GravityChartsForBarYAndScatter',
     /** Save field settings (formatting and colors) in the dataset */
     StoreFieldSettingsAtDataset = 'StoreFieldSettingsAtDataset',
+    /** Enable dataset revisions */
+    EnableDatasetRevisions = 'EnableDatasetRevisions',
+    /** Enables getting info about forbidden export from dataset/connection info endpoints  */
+    EnableBackendExportInfo = 'EnableBackendExportInfo',
 }
 
 export type FeatureConfig = Record<string, boolean>;

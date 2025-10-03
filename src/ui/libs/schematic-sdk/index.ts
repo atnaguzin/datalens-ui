@@ -15,7 +15,7 @@ import {
     TIMEZONE_OFFSET_HEADER,
     RPC_AUTHORIZATION
 } from '../../../shared';
-import type {WithRequired, anonymousSchema, authSchema, schema} from '../../../shared';
+import type {WithRequired, authSchema, schema} from '../../../shared';
 import {DL} from '../../constants';
 import {registry} from '../../registry';
 import Utils from '../../utils';
@@ -73,7 +73,6 @@ const sdkConfig: SdkConfig = {
 export type TypedSchema = {
     root: typeof schema;
     auth: typeof authSchema;
-    anonymous: typeof anonymousSchema;
 };
 
 export const initSdk = () => {

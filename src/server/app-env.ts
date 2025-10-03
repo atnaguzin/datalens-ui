@@ -10,6 +10,8 @@ export const isFullMode = mode === AppMode.Full;
 export const isDatalensMode = mode === AppMode.Datalens;
 export const isChartsMode = mode === AppMode.Charts;
 export const isApiMode = mode === AppMode.Api;
+export const isPublicApiMode = mode === AppMode.PublicApi;
+
 export const isOpensourceInstallation = appInstallation === AppInstallation.Opensource;
 
 export const unitedStorageConfigLoadedTimeout = parseInt(process.env.UNITED_STORAGE_CONFIG_LOADED_TIMEOUT || '10000'); 

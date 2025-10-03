@@ -1,6 +1,6 @@
 {
   "name": "@datalens-platform/datalens-ui",
-  "version": "0.3168.0",
+  "version": "0.3271.0",
   "files": [
     "build",
     "scripts"
@@ -56,6 +56,7 @@
   "author": "DataLens Team <https://github.com/datalens-tech>",
   "license": "Apache-2.0",
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
     "@braintree/sanitize-url": "^6.0.0",
     "@datalens-tech/ui-sandbox-modules": "^0.36.0",
     "@datalens-tech/xlsx": "^0.20.1",
@@ -67,7 +68,7 @@
     "@diplodoc/transform": "^4.59.0",
     "@gravity-ui/app-layout": "^2.1.0",
     "@gravity-ui/browserslist-config": "^4.3.0",
-    "@gravity-ui/chartkit": "^7.5.2",
+    "@gravity-ui/chartkit": "^7.9.1",
     "@gravity-ui/dashkit": "^9.1.1",
     "@gravity-ui/date-utils": "^2.5.6",
     "@gravity-ui/expresskit": "^2.4.0",
@@ -125,7 +126,9 @@
     "request-ip": "^3.3.0",
     "request-promise-native": "^1.0.9",
     "set-cookie-parser": "^2.7.1",
-    "workerpool": "^9.1.1"
+    "swagger-ui-express": "^5.0.1",
+    "workerpool": "^9.1.1",
+    "zod": "^3.25.64"
   },
   "devDependencies": {
     "@floating-ui/react": "^0.27.13",
@@ -188,6 +191,7 @@
     "@types/request-ip": "^0.0.41",
     "@types/request-promise-native": "^1.0.21",
     "@types/set-cookie-parser": "^2.4.10",
+    "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^9.0.8",
     "@types/webpack-env": "^1.16.0",
     "bem-cn-lite": "^4.0.0",
