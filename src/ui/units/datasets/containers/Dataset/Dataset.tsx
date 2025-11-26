@@ -533,15 +533,6 @@ class Dataset extends React.Component<Props, State> {
         });
     };
 
-    setActualVersionHandler() {
-        const {datasetId, history} = this.props;
-        this.props.openDialogSaveDraftInstanceAsActualConfirm({
-            onApply: () => {
-                this.props.setActualDataset({history, datasetId});
-            },
-        });
-    }
-
     renderErrorContent() {
         const {sdk, datasetError} = this.props;
         const {status, requestId, traceId, message, code} =

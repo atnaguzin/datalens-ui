@@ -13,7 +13,7 @@ const b = block('dl-collection-dialog');
 
 export type CollectionDialogValues = {
     title: string;
-    project: string;
+    project: string | undefined;
     description: string;
 };
 
@@ -103,7 +103,7 @@ export const CollectionDialog = React.memo<Props>(
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_project')}</div>
                         
-                        <Select defaultValue={[values.project[0] || projectDefault]} options={projects} onUpdate={handleChange}/>
+                        <Select defaultValue={[(values.project || [''])[0] || projectDefault]} options={projects} onUpdate={handleChange}/>
                     </div>
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_description')}</div>

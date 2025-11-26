@@ -149,7 +149,7 @@ export const useLayout = ({workbookId, refreshWorkbookInfo}: UseLayoutArgs) => {
                                                     open: true,
                                                     workbookId: workbook.workbookId,
                                                     title: workbook.title,
-                                                    project: workbook.projectId,
+                                                    project: workbook.projectId ?? '',
                                                     description: workbook?.description ?? '',
                                                     onApply: refreshWorkbookInfo,
                                                     onClose: () => {

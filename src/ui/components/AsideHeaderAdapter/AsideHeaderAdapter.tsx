@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {CircleQuestion, Gear, Sliders} from '@gravity-ui/icons';
+import {CircleQuestion, Gear, Sliders, ArrowRightFromSquare} from '@gravity-ui/icons';
 import type {AsideHeaderProps, MenuItem, TopAlertProps} from '@gravity-ui/navigation';
 import {AsideHeader, FooterItem} from '@gravity-ui/navigation';
 import type {IconData} from '@gravity-ui/uikit';

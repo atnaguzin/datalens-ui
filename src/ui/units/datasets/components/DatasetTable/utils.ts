@@ -272,20 +272,3 @@ export const isHiddenSupported = (row: DatasetField) => {
     return row.initial_data_type !== DATASET_FIELD_TYPES.UNSUPPORTED;
 };
 
-export const getFieldUISettings = ({field}: {field: DatasetField}) => {
-    const value = field?.ui_settings;
-    let result = null;
-    try {
-        if (value) {
-            result = JSON.parse(value);
-        }
-    } catch (e) {
-        console.error('Incorrect ui_settings value', e);
-    }
-
-    return result;
-};
-
-export const isFieldWithDisplaySettings = ({field}: {field: DatasetField}) => {
-    return !isEmpty(field?.ui_settings);
-};

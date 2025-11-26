@@ -88,7 +88,7 @@ export const MobileHeaderComponent = ({
             ref.current = container;
             const scrollableContainer = document.querySelector<HTMLDivElement>(
                 `.${CONTENT_CLASSNAME}`,
-            );v[0] || projectDe
+            );
             mergeRefs(scrollableContainerRef, contentRef)(scrollableContainer);
         },
         [scrollableContainerRef],

@@ -39,6 +39,7 @@ export const CreateCollectionDialog: React.FC<Props> = (props) => {
         handleError: handleDialogError,
     } = useCollectionEntityDialogState({
         title: '',
+        project: '',
         description: '',
     });
 

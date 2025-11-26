@@ -3,8 +3,6 @@ import React from 'react';
 import {i18n} from 'i18n';
 import type {ColorPalette, Field, TableBarsSettings} from 'shared';
 import {BarsColorType, DialogFieldBarsSettingsQa} from 'shared';
-import {getColorByColorSettings} from 'shared/utils/palettes';
-import {getPaletteColors} from 'ui/utils';
 
 import {DialogFieldRow} from '../../../DialogFieldRow/DialogFieldRow';
 import {GradientColorControl} from '../GradientColorControl/GradientColorControl';

@@ -57,7 +57,6 @@ class ColorPaletteEditorContainer extends React.Component<ColorPaletteEditorProp
             colorPalettes,
             condensed,
             hasEditRights = true,
-            enableDefaultColorPalette,
         } = this.props;
 
         return (

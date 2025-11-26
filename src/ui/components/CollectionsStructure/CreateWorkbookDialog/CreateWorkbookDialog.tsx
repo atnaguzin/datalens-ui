@@ -94,6 +94,7 @@ export const CreateWorkbookDialog: React.FC<CreateWorkbookDialogProps> = ({
     } = useCollectionEntityDialogState({
         title: publicGalleryState?.title || defaultWorkbookTitle || '',
         description: publicGalleryState?.description || '',
+        project: '',
     });
 
     const isCreatingLoading = useSelector(selectCreateWorkbookIsLoading);

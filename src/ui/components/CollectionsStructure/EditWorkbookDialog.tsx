@@ -35,7 +35,7 @@ export type OpenDialogEditWorkbookArgs = {
 export const EditWorkbookDialog: React.FC<Props> = (props) => {
     const dispatch: AppDispatch = useDispatch();
 
-    const {title, description, open, onClose} = props;
+    const {title, project, description, open, onClose} = props;
 
     const {
         values: dialogValues,
@@ -45,6 +45,7 @@ export const EditWorkbookDialog: React.FC<Props> = (props) => {
     } = useCollectionEntityDialogState({
         title,
         description,
+        project
     });
 
     const isLoading = useSelector(selectUpdateWorkbookIsLoading);

@@ -17,7 +17,7 @@ const b = block('dl-workbook-dialog');
 
 export type WorkbookDialogValues = {
     title: string;
-    project: string;
+    project: string | undefined;
     description: string;
 };
 
@@ -141,7 +141,7 @@ export const WorkbookDialog = React.memo<Props>(
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_project')}</div>
 
-                        <Select defaultValue={[values.project[0] || projectDefault]} options={projects} onUpdate={handleChange}/>
+                        <Select defaultValue={[(values.project || [''])[0] || projectDefault]} options={projects} onUpdate={handleChange}/>
                     </div>
                     {!isHiddenDescription && (
                         <div className={b('field')}>

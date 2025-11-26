@@ -12,7 +12,6 @@ import type {CommonSharedExtraSettings} from '../../../../../../shared';
 import {DialogMetricSettingsQa} from '../../../../../../shared';
 import type {DatalensGlobalState} from '../../../../../../ui';
 import DialogManager from '../../../../../components/DialogManager/DialogManager';
-import {getTenantDefaultColorPaletteId} from '../../../../../constants/common';
 import {closeDialog} from '../../../../../store/actions/dialog';
 import {selectColorPalettes} from '../../../../../store/selectors/colorPaletteEditor';
 import {getPaletteColors} from '../../../../../utils';

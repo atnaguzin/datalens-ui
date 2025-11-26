@@ -74,7 +74,7 @@ export const useActions = ({fetchStructureItems, onCloseMoveDialog}: UseActionsA
                                     open: true,
                                     collectionId: item.collectionId,
                                     title: item.title,
-                                    project: item.projectId,
+                                    project: item.projectId ?? '',
                                     description: item?.description ?? '',
                                     onApply: (collection: UpdateCollectionResponse | null) => {
                                         if (collection) {
@@ -248,7 +248,7 @@ export const useActions = ({fetchStructureItems, onCloseMoveDialog}: UseActionsA
                                         open: true,
                                         workbookId: item.workbookId,
                                         title: item.title,
-                                        project: item.projectId,
+                                        project: item.projectId ?? '',
                                         description: item?.description ?? '',
                                         onApply: (workbook: UpdateWorkbookResponse | null) => {
                                             if (workbook) {

@@ -44,6 +44,7 @@ export const EditCollectionDialog: React.FC<Props> = (props) => {
     } = useCollectionEntityDialogState({
         title,
         description,
+        project
     });
 
     const handleApply = React.useCallback(

@@ -15,7 +15,6 @@ import {
     DIALOG_MOVE_COLLECTIONS_WORKBOOKS,
     DIALOG_NO_CREATE_COLLECTION_PERMISSION,
 } from '../../../../components/CollectionsStructure';
-import {DIALOG_CREATE_PUBLIC_GALLERY_WORKBOOK} from '../../../../components/CollectionsStructure/CreatePublicGalleryWorkbookDialog';
 import {ViewError} from '../../../../components/ViewError/ViewError';
 import type {AppDispatch} from '../../../../store';
 import {closeDialog, openDialog} from '../../../../store/actions/dialog';

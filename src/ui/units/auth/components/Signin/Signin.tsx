@@ -23,7 +23,6 @@ import {Password} from './components/Password';
 import darkLogo from 'ui/assets/icons/dl-auth-logo-dark.svg';
 import lightLogo from 'ui/assets/icons/dl-auth-logo-light.svg';
 import defaultLogoIcon from 'ui/assets/icons/logo.svg';
-import rebrandingLogoIcon from 'ui/assets/icons/os-logo.svg';
 
 import './Signin.scss';
 
@@ -69,10 +68,6 @@ export const Signin = ({alternativeAuthOptions, logoIcon}: SigninProps) => {
             setErrorMessage(null);
         }
     }, [errorMessage]);
-
-    const defaultLogo = isEnabledFeature(Feature.EnableDLRebranding)
-        ? rebrandingLogoIcon
-        : defaultLogoIcon;
 
     return (
         <Flex

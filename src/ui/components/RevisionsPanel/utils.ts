@@ -1,6 +1,4 @@
-import DatasetUtils from 'ui/units/datasets/helpers/utils';
-
-import {EntryScope, Feature} from '../../../shared';
+import {EntryScope} from '../../../shared';
 
 /**
  * Which sections should be allowed to show a new panel with versions

@@ -1,13 +1,10 @@
 import {UserRole} from 'shared/components/auth/constants/role';
-import {isEnabledFeature} from 'ui/utils/isEnabledFeature';
-
 import type {LineShapeType} from '../../shared';
 import {
     AppEnvironment,
     DeviceType,
     ErrorContentTypes,
     FALLBACK_LANGUAGES,
-    Feature,
     GRADIENT_PALETTES,
     GradientType,
     PALETTES,

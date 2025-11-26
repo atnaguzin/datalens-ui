@@ -10,7 +10,7 @@ import type {
 import {Button, DropdownMenu, Icon, Tooltip} from '@gravity-ui/uikit';
 import block from 'bem-cn-lite';
 import {I18n} from 'i18n';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {useHistory} from 'react-router-dom';
 import {DropdownAction} from 'ui/components/DropdownAction/DropdownAction';
 import {EntryIcon} from 'ui/components/EntryIcon/EntryIcon';
@@ -53,6 +53,7 @@ export const CollectionActions = React.memo<Props>(
         onDeleteClick,
     }) => {
         const collection = useSelector(selectCollection);
+        const dispatch: AppDispatch = useDispatch();
         const history = useHistory();
         const {CustomActionPanelCollectionActions} = registry.collections.components.getAll();
 

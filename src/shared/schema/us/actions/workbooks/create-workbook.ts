@@ -6,7 +6,7 @@ import {workbookSchema} from '../../schemas/workbooks';
 
 const createWorkbookArgsSchema = z.object({
     collectionId: z.string().nullable().optional(),
-    project: z.string(),
+    project: z.string().optional(),
     title: z.string(),
     description: z.string().optional(),
 });

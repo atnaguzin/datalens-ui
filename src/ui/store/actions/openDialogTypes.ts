@@ -132,4 +132,7 @@ export type OpenDialogArgs<T = unknown> =
     | OpenDialogSharedEntryUnbindArgs
     | OpenDialogSharedEntryPermissionsArgs
     | OpenDialogSelectSharedEntryArgs
+    | OpenDialogAssignClaimsArgs
+    | OpenDialogShareArgs
+    | OpenDialogExportPdfArgs
     | OpenDialogEntryDescriptionArgs;

@@ -39,7 +39,7 @@ export type Collection = {
     title: string;
     description: string | null;
     parentId: string | null;
-    projectId?: string;
+    projectId: string | null;
     tenantId: string;
     createdBy: string;
     createdAt: string;

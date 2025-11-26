@@ -109,6 +109,67 @@ const Content = ({
 
     const hideDashTitle = settings.hideDashTitle || (DL.IS_MOBILE && !isMobileFixedHeaderEnabled);
 
+    // TODO: Кирилл Автономов: нужно тут вывести экспорт в Excel
+    // const exportDashboard = async () => {
+    //     const links = Object.keys(this.props.entry.links);
+    //     const result = await Promise.allSettled(
+    //         links.map((id) =>
+    //             getSdk().sdk.us.getEntry({
+    //                 entryId: id,
+    //                 includePermissionsInfo: true,
+    //             }),
+    //         ),
+    //     );
+    //     const entries = result
+    //         .filter(({status}) => status === 'fulfilled')
+    //         .filter((item: any) => ['table_ql_node', 'table_wizard_node'].indexOf(item.value.type) >= 0)
+
+    //     this.setState({isExportLoading: true});
+    //     fetch("/export-entries", {
+    //         method: 'POST',
+    //         headers: { 
+    //             'Content-Type': 'application/json',
+    //             'x-rpc-authorization': Utils.getRpcAuthorization() 
+    //         },
+    //         body: JSON.stringify({
+    //             "links": entries.map((item: any)=>item.value.entryId),
+    //             "host": window.location.origin, //getConfig().REPORTS_URL,
+    //             "formSettings": {
+    //                 "delNumbers": null,
+    //                 "delValues": null,
+    //                 "encoding": null,
+    //                 "format": "csv"
+    //             },
+    //             "lang": "ru",
+    //             "outputFormat": "xlsx",
+    //             "exportFilename": "excel",
+    //             "params": {}
+    //         })
+    //     }).then(res => {
+    //         if (res.status === 200) {
+    //             return res.blob();
+    //         } else {
+    //             return null;
+    //         }
+    //     }).then(blob => {
+    //         if (blob) {
+    //             var url = window.URL.createObjectURL(blob);
+    //             const anchorElement = document.createElement('a');
+    //             document.body.appendChild(anchorElement);
+    //             anchorElement.style.display = 'none';
+    //             anchorElement.href = url;
+    //             anchorElement.download = `${url.split('/').pop()}.xlsx`;
+    //             anchorElement.click();
+                
+    //             window.URL.revokeObjectURL(url);
+    //         } else {
+    //             this.props.setErrorMode(Error(i18n('dash.main.view', 'export_error')));
+    //         }
+    //     }).finally(()=>{
+    //         this.setState({isExportLoading: false});
+    //     });
+    // };
+
     return (
         <DashKitDnDWrapper onDragStart={onDragStart} onDragEnd={onDragEnd}>
             <div
@@ -138,6 +199,20 @@ const Content = ({
                             'with-footer': isEnabledFeature(Feature.EnableFooter),
                         })}
                     >
+                        {/* {!settings.hideDashTitle && !DL.IS_MOBILE && (
+                            <div className={b('entry-name')} data-qa={DashEntryQa.EntryName}>
+                                {Utils.getEntryNameFromKey(this.props.entry?.key)}
+                                {(!DL.EXPORT_DASH_EXCEL || showEditActionPanel) ? null : <Button
+                                    className={b('export-button')}
+                                    onClick={exportDashboard}
+                                    loading={this.state.isExportLoading}
+                                    view="action"
+                                    size="m"
+                                >
+                                    {i18n('dash.main.view', 'export')}
+                                </Button>}
+                            </div>
+                        )} */}
                         {!hideDashTitle && dashEntryKey && (
                             <div className={b('entry-name')} data-qa={DashEntryQa.EntryName}>
                                 {Utils.getEntryNameFromKey(dashEntryKey)}

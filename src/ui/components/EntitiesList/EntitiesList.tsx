@@ -43,6 +43,8 @@ export const EntitiesList = ({
     rowClassName,
     className,
     title: customTitle,
+    updatedEntities,
+    setUpdatedEntities
 }: EntitiesListProps) => {
     const title =
         customTitle ?? (isCurrent ? i18n('label_current-object') : getLabelByScope(scope));

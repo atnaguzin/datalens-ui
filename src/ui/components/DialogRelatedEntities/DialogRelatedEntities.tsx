@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import type {DropdownMenuItem} from '@gravity-ui/uikit';
 import {
@@ -107,9 +107,16 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
     );
     const [relationsCount, setRelationsCount] = React.useState<null | number>(null);
     const [updatedEntities, setUpdatedEntities] = React.useState<Record<string, boolean>>({});
-    const [accesses, setAccesses] = React.useState<any>([]);
+    const [accesses] = React.useState<any>([]);
     const {DialogRelatedEntitiesRadioHint} = registry.common.components.getAll();
     const {renderDialogRelatedEntitiesAlertHint} = registry.common.functions.getAll();
+
+    let selectedRelationCount = 0;
+    for (const updatedEntry in updatedEntities) {
+        if (updatedEntities[updatedEntry]) {
+            selectedRelationCount++;
+        }
+    }
 
     const fetchRelatedEntries = React.useCallback(() => {
         setIsLoading(true);

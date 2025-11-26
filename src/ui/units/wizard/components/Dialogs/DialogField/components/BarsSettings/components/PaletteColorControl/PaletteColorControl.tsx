@@ -48,9 +48,7 @@ export const PaletteColorControl: React.FC<PaletteColorControlProps> = (
         return getPaletteColors(palette, colorPalettes);
     }, [colorPalettes, palette]);
 
-    const paletteColors = React.useMemo(() => {
-        return getPaletteColors(palette, colorPalettes);
-    }, [colorPalettes, palette]);
+    const ref = useRef<HTMLDivElement | null>(null);
 
     const currentColorHexBySettings = getColorByColorSettings({
         currentColors: paletteColors,
