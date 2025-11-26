@@ -308,7 +308,10 @@ export type CreateEntryRequest<T = Entry> = Partial<Omit<T, 'entryId'>> &
         annotation?: EntryAnnotationArgs;
     };
 
-export type UpdateEntryRequest<T = Entry> = Omit<T, 'entryId' | 'scope' | 'type'> & {
+export type UpdateEntryRequest<T = Entry> = Omit<
+    T,
+    'entryId' | 'scope' | 'type' | 'updatedAt' | 'savedId' | 'publishedId'
+> & {
     description?: string;
     annotation?: EntryAnnotationArgs;
 };
@@ -320,8 +323,7 @@ export type EntryType = '' | WidgetType;
 
 export interface EntryReadParams {
     revId?: string;
-    includePermissions: string;
-    includePermissionsInfo?: string;
+    includePermissionsInfo: string;
     includeLinks: string;
     includeFavorite?: boolean;
     branch?: string;

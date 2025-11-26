@@ -38,6 +38,8 @@ export const datasetFieldsSelector = (state: DatalensGlobalState) =>
 export const dataExportEnabledSelector = (state: DatalensGlobalState) =>
     !(state.dataset.content.data_export_forbidden ?? false);
 export const sourcesSelector = (state: DatalensGlobalState) => state.dataset.content.sources;
+export const sourcesPaginationSelector = (state: DatalensGlobalState) =>
+    state.dataset.sourcesPagination;
 export const avatarsSelector = (state: DatalensGlobalState) => state.dataset.content.source_avatars;
 export const relationsSelector = (state: DatalensGlobalState) =>
     state.dataset.content.avatar_relations;
@@ -49,6 +51,11 @@ export const rlsSelector = (state: DatalensGlobalState) => {
     return state.dataset.content.rls;
 };
 export const optionsSelector = (state: DatalensGlobalState) => state.dataset.options;
+export const sourceListingOptionsSelector = (state: DatalensGlobalState) =>
+    state.dataset.sourceListingOptions;
+export const currentDbNameSelector = (state: DatalensGlobalState) => state.dataset.currentDbName;
+export const connectionsDbNamesSelector = (state: DatalensGlobalState) =>
+    state.dataset.connectionsDbNames;
 
 export const datasetPreviewSelector = (state: DatalensGlobalState) => state.dataset.preview;
 export const isLoadPreviewByDefaultSelector = (state: DatalensGlobalState) =>
@@ -112,6 +119,7 @@ export const connectionsSelector = (state: DatalensGlobalState) => {
         };
     });
 };
+export type SelectedConnections = ReturnType<typeof connectionsSelector>;
 
 const getSourceHashTitleId = <T extends {parameter_hash: string; title: string}>({
     parameter_hash,
@@ -121,6 +129,14 @@ const getSourceHashTitleId = <T extends {parameter_hash: string; title: string}>
 };
 
 export const sourcePrototypesSelector = (state: DatalensGlobalState) => {
+    return state.dataset.sourcePrototypes;
+};
+
+export const sourcesSearchLoadingSelector = (state: DatalensGlobalState) => {
+    return state.dataset.ui.isSourcesSearchLoading;
+};
+
+export const sortedSourcePrototypesSelector = (state: DatalensGlobalState) => {
     const {
         sourcePrototypes = [],
         content: {sources = [], source_avatars: sourceAvatars = []},
@@ -152,6 +168,8 @@ export const sourcePrototypesSelector = (state: DatalensGlobalState) => {
     });
 };
 
+export type SortedSourcePrototypes = ReturnType<typeof sortedSourcePrototypesSelector>;
+
 export const selectedConnectionSelector = (state: DatalensGlobalState) => {
     const {ui: {selectedConnectionId} = {}, selectedConnections} = state.dataset;
 
@@ -163,6 +181,13 @@ export const selectedConnectionSelector = (state: DatalensGlobalState) => {
         return existedConnectionId === selectedConnectionId;
     });
 };
+export const currentDbNamesSelector = createSelector(
+    selectedConnectionSelector,
+    connectionsDbNamesSelector,
+    (connection, dbNames) => {
+        return dbNames?.[connection?.entryId ?? ''];
+    },
+);
 
 export const editorFilterSelector = (state: DatalensGlobalState) => state.dataset.editor.filter;
 export const editorItemsToDisplaySelector = (state: DatalensGlobalState) => {
@@ -194,4 +219,15 @@ export const rawSqlLevelSelector = createSelector(
 
         return rawSqlLevel;
     },
+);
+
+const datasetInitialDescriptionSelector = (state: DatalensGlobalState) =>
+    state.dataset.prevContent?.description ?? '';
+
+export const datasetDescriptionSelector = (state: DatalensGlobalState) =>
+    state.dataset.content?.description ?? '';
+
+export const isDescriptionChangedSelector = createSelector(
+    [datasetInitialDescriptionSelector, datasetDescriptionSelector],
+    (initialDescription, previewDescription) => initialDescription !== previewDescription,
 );

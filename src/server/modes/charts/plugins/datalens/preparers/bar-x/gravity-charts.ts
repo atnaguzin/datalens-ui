@@ -5,11 +5,13 @@ import type {
     ChartSeries,
 } from '@gravity-ui/chartkit/gravity-charts';
 import merge from 'lodash/merge';
+import sortBy from 'lodash/sortBy';
 
 import type {SeriesExportSettings, ServerField, WrappedMarkdown} from '../../../../../../../shared';
 import {
     AxisMode,
     LabelsPositions,
+    PERCENT_VISUALIZATIONS,
     PlaceholderId,
     getFakeTitleOrTitle,
     getXAxisMode,
@@ -25,7 +27,9 @@ import {getFormattedLabel} from '../../gravity-charts/utils/dataLabels';
 import {getFieldFormatOptions} from '../../gravity-charts/utils/format';
 import {getConfigWithActualFieldTypes} from '../../utils/config-helpers';
 import {getExportColumnSettings} from '../../utils/export-helpers';
-import {getAxisType} from '../helpers/axis';
+import {getAxisFormatting, getAxisType} from '../helpers/axis';
+import {getLegendColorScale, shouldUseGradientLegend} from '../helpers/legend';
+import {getSegmentMap} from '../helpers/segments';
 import type {PrepareFunctionArgs} from '../types';
 
 import {prepareBarX} from './prepare-bar-x';
@@ -35,6 +39,8 @@ type OldBarXDataItem = {
     x?: number;
     label?: string | number;
     custom?: any;
+    color?: string;
+    colorValue?: number;
 } | null;
 
 type ExtendedBaXrSeriesData = Omit<BarXSeriesData, 'x'> & {
@@ -49,7 +55,8 @@ type ExtendedBarXSeries = Omit<BarXSeries, 'data'> & {
     data: ExtendedBaXrSeriesData[];
 };
 
-export function prepareD3BarX(args: PrepareFunctionArgs) {
+// eslint-disable-next-line complexity
+export function prepareGravityChartBarX(args: PrepareFunctionArgs) {
     const {
         shared,
         labels,
@@ -57,6 +64,8 @@ export function prepareD3BarX(args: PrepareFunctionArgs) {
         disableDefaultSorting = false,
         idToDataType,
         colors,
+        colorsConfig,
+        visualizationId,
     } = args;
     const xPlaceholder = placeholders.find((p) => p.id === PlaceholderId.X);
     const xField: ServerField | undefined = xPlaceholder?.items?.[0];
@@ -106,19 +115,20 @@ export function prepareD3BarX(args: PrepareFunctionArgs) {
 
     const shouldUseHtmlForLabels =
         isMarkupField(labelField) || isHtmlField(labelField) || isMarkdownField(labelField);
-
+    const shouldUsePercentStacking = PERCENT_VISUALIZATIONS.has(visualizationId);
     const seriesData = preparedData.graphs.map<ExtendedBarXSeries>((graph) => {
         return {
             name: graph.title,
             type: 'bar-x',
             color: graph.color,
             stackId: graph.stack,
-            stacking: 'normal',
+            stacking: shouldUsePercentStacking ? 'percent' : 'normal',
             data: graph.data.reduce(
                 (acc: ExtendedBaXrSeriesData[], item: OldBarXDataItem, index: number) => {
                     const dataItem: ExtendedBaXrSeriesData = {
                         y: item?.y || 0,
                         custom: item?.custom,
+                        color: item?.color,
                     };
 
                     if (isDataLabelsEnabled) {
@@ -151,11 +161,30 @@ export function prepareD3BarX(args: PrepareFunctionArgs) {
                 inside: shared.extraSettings?.labelsPosition !== LabelsPositions.Outside,
                 html: shouldUseHtmlForLabels,
             },
+            yAxis: graph.yAxis,
         };
     });
 
     let legend: ChartData['legend'];
-    if (seriesData.length <= 1) {
+    if (seriesData.length && shouldUseGradientLegend(colorItem, colorsConfig, shared)) {
+        const points = preparedData.graphs
+            .map((graph) =>
+                (graph.data ?? []).map((d: OldBarXDataItem) => ({colorValue: d?.colorValue})),
+            )
+            .flat(2);
+
+        const colorScale = getLegendColorScale({
+            colorsConfig,
+            points,
+        });
+
+        legend = {
+            enabled: true,
+            type: 'continuous',
+            title: {text: getFakeTitleOrTitle(colorItem), style: {fontWeight: '500'}},
+            colorScale,
+        };
+    } else if (seriesData.length <= 1) {
         legend = {enabled: false};
     }
 
@@ -173,14 +202,52 @@ export function prepareD3BarX(args: PrepareFunctionArgs) {
         if (isNumberField(xField)) {
             xAxis.type = xPlaceholder?.settings?.type === 'logarithmic' ? 'logarithmic' : 'linear';
         }
+
+        const xAxisLabelNumberFormat = xPlaceholder
+            ? getAxisFormatting({
+                  placeholder: xPlaceholder,
+                  visualizationId,
+              })
+            : undefined;
+
+        if (xAxisLabelNumberFormat) {
+            xAxis.labels = {numberFormat: xAxisLabelNumberFormat};
+        }
     }
 
+    const segmentsMap = getSegmentMap(args);
+    const segments = sortBy(Object.values(segmentsMap), (s) => s.index);
+    const isSplitEnabled = new Set(segments.map((d) => d.index)).size > 1;
+
+    const axisLabelNumberFormat = yPlaceholder
+        ? getAxisFormatting({
+              placeholder: yPlaceholder,
+              visualizationId,
+          })
+        : undefined;
     const config: ChartData = {
         series: {
             data: seriesData as ChartSeries[],
         },
         legend,
         xAxis,
+        yAxis: segments.map((d) => {
+            return {
+                labels: {
+                    numberFormat: axisLabelNumberFormat ?? undefined,
+                },
+                plotIndex: d.index,
+                position: d.isOpposite ? 'right' : 'left',
+                title: isSplitEnabled ? {text: d.title} : undefined,
+            };
+        }),
+        split: {
+            enable: isSplitEnabled,
+            gap: '40px',
+            plots: segments.map(() => {
+                return {};
+            }),
+        },
     };
 
     if (yField) {
@@ -189,5 +256,11 @@ export function prepareD3BarX(args: PrepareFunctionArgs) {
         };
     }
 
-    return merge(getBaseChartConfig(shared), config);
+    return merge(
+        getBaseChartConfig({
+            extraSettings: shared.extraSettings,
+            visualization: {placeholders, id: visualizationId},
+        }),
+        config,
+    );
 }

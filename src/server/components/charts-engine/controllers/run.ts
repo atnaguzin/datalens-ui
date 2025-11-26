@@ -11,7 +11,7 @@ import type {ResolvedConfig} from '../components/storage/types';
 import {getDuration} from '../components/utils';
 
 import {resolveChartConfig} from './utils';
-import { US } from '../../sdk';
+import US from '../../sdk/us';
 
 type RunControllerExtraSettings = {
     storageApiPath?: string;
@@ -174,7 +174,7 @@ export const runController = (
                 req.body.params['__embed'] = currentUser.data[0].isEmbed == true ? 1 : -1;
             }
 
-            runnerFound.handler(ctx, {
+            await runnerFound.handler(ctx, {
                 chartsEngine,
                 req,
                 res,

@@ -11,12 +11,21 @@
     display: flex;
     flex-direction: column;
 
+    .g-dialog-header__caption {
+        max-width: 80%;
+    }
+
     &_additional-panel-open {
         max-width: min(calc(100vw - 530px), 1200px);
     }
 
     &__dialog_additional-panel-open {
         padding-right: 330px;
+
+        /** hotfix clip-path for additional panel */
+        & .g-modal__content {
+            clip-path: none;
+        }
     }
 
     &__settings {
@@ -27,16 +36,23 @@
     }
 
     &__settings-field-name {
-        width: 300px;
+        max-width: 100%;
     }
 
     &__settings-name {
         height: 36px;
-        width: 334px;
+        width: 100%;
     }
 
     #{$class}__settings-field-name-input {
         @include text-subheader-3();
+        padding-right: 0;
+
+        &_fake {
+            position: absolute;
+            visibility: hidden;
+            white-space: pre;
+        }
     }
 
     &__settings-field-name-icon {

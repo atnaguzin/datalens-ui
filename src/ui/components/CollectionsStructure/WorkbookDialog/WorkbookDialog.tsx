@@ -15,18 +15,26 @@ const i18n = I18n.keyset('component.collections-structure');
 
 const b = block('dl-workbook-dialog');
 
+export type WorkbookDialogValues = {
+    title: string;
+    project: string;
+    description: string;
+};
+
+type WorkbookDialogErrors = Partial<Record<keyof WorkbookDialogValues, string>>;
+
 export type Props = {
+    values: WorkbookDialogValues;
+    errors?: WorkbookDialogErrors;
     title: string;
     project?: string;
     textButtonApply: string;
     open: boolean;
     isLoading: boolean;
-    titleValue?: string;
-    projectValue?: string;
-    descriptionValue?: string;
     isHiddenDescription?: boolean;
     titleAutoFocus?: boolean;
-    onApply: (args: {title: string; project?: string; description?: string; onClose: () => void}) => Promise<unknown>;
+    onChange: (values: WorkbookDialogValues) => void;
+    onApply: (values: WorkbookDialogValues, onClose: () => void) => void;
     onClose: () => void;
     customActions?: React.ReactNode;
     customBody?: React.ReactNode;
@@ -35,15 +43,15 @@ export type Props = {
 
 export const WorkbookDialog = React.memo<Props>(
     ({
+        values,
+        errors,
         title,
         textButtonApply,
         open,
         isLoading,
-        titleValue = '',
-        descriptionValue = '',
-        projectValue = '',
         isHiddenDescription = false,
         titleAutoFocus = false,
+        onChange,
         onApply,
         onClose,
         customActions,
@@ -51,12 +59,9 @@ export const WorkbookDialog = React.memo<Props>(
         getDialogFooterPropsOverride,
         qa,
     }) => {
-        const [innerProjectValue, setInnerProjectValue] = React.useState([projectValue]);
-        const [innerTitleValue, setInnerTitleValue] = React.useState(titleValue);
-        const [innerDescriptionValue, setInnerDescriptionValue] = React.useState(descriptionValue);
-
         var [projects, setProjects] = React.useState([]);
         var [projectDefault, setProjectDefault] = React.useState("");
+
 
         React.useEffect(() => {
             Utils.projects({}).then((values)=>{
@@ -72,22 +77,23 @@ export const WorkbookDialog = React.memo<Props>(
                 }
                 setProjects(results);
             })
+        });
 
-            if (open) {
-                setInnerTitleValue(titleValue);
-                setInnerProjectValue([projectValue]);
-                setInnerDescriptionValue(descriptionValue);
-            }
-        }, [open, titleValue, projectValue, descriptionValue]);
+        const handleChange = React.useCallback(
+            (params) => {
+                const {target} = params;
+
+                onChange({
+                    ...values,
+                    [target.name]: target.value,
+                });
+            },
+            [onChange, values],
+        );
 
         const handleApply = React.useCallback(() => {
-            onApply({
-                title: innerTitleValue,
-                project: innerProjectValue[0],
-                description: isHiddenDescription ? undefined : innerDescriptionValue,
-                onClose,
-            });
-        }, [innerTitleValue, innerProjectValue, innerDescriptionValue, isHiddenDescription, onApply, onClose]);
+            onApply(values, onClose);
+        }, [onApply, values, onClose]);
 
         const dialogFooterProps = React.useMemo(() => {
             const defaultDialogFooterProps = {
@@ -95,7 +101,7 @@ export const WorkbookDialog = React.memo<Props>(
                 onClickButtonApply: handleApply,
                 textButtonApply: textButtonApply,
                 propsButtonApply: {
-                    disabled: !innerTitleValue,
+                    disabled: !values.title,
                     qa: WorkbookDialogQA.APPLY_BUTTON,
                 },
                 textButtonCancel: i18n('action_cancel'),
@@ -108,10 +114,10 @@ export const WorkbookDialog = React.memo<Props>(
         }, [
             getDialogFooterPropsOverride,
             handleApply,
-            innerTitleValue,
             isLoading,
             onClose,
             textButtonApply,
+            values.title,
         ]);
 
         const renderBody = () => {
@@ -124,8 +130,10 @@ export const WorkbookDialog = React.memo<Props>(
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_title')}</div>
                         <TextInput
-                            value={innerTitleValue}
-                            onUpdate={setInnerTitleValue}
+                            name="title"
+                            error={errors?.title}
+                            value={values.title}
+                            onChange={handleChange}
                             autoFocus={titleAutoFocus}
                             qa={WorkbookDialogQA.TITLE_INPUT}
                         />
@@ -133,14 +141,16 @@ export const WorkbookDialog = React.memo<Props>(
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_project')}</div>
 
-                        <Select defaultValue={[innerProjectValue[0] || projectDefault]} options={projects} onUpdate={setInnerProjectValue}/>
+                        <Select defaultValue={[values.project[0] || projectDefault]} options={projects} onUpdate={handleChange}/>
                     </div>
                     {!isHiddenDescription && (
                         <div className={b('field')}>
                             <div className={b('title')}>{i18n('label_description')}</div>
                             <TextArea
-                                value={innerDescriptionValue}
-                                onUpdate={setInnerDescriptionValue}
+                                name="description"
+                                error={errors?.description}
+                                value={values.description}
+                                onChange={handleChange}
                                 minRows={2}
                             />
                         </div>

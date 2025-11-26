@@ -3,9 +3,9 @@ import React from 'react';
 
 import block from 'bem-cn-lite';
 import {useDispatch} from 'react-redux';
+import {Header as ChartHeader} from 'ui/components/Widgets/Chart/components/Header';
 import {DL} from 'ui/constants';
 import type {ChartInitialParams} from 'ui/libs/DatalensChartkit/components/ChartKitBase/ChartKitBase';
-import {registry} from 'ui/registry';
 import {setSkipReload} from 'ui/units/dash/store/actions/dashTyped';
 
 import {getRandomCKId} from '../../../../libs/DatalensChartkit/ChartKit/helpers/getRandomCKId';
@@ -16,7 +16,6 @@ import Drill from '../../../../libs/DatalensChartkit/components/Drill/Drill';
 import {SideMarkdown} from '../../../../libs/DatalensChartkit/components/SideMarkdown/SideMarkdown';
 import ExtensionsManager from '../../../../libs/DatalensChartkit/modules/extensions-manager/extensions-manager';
 import type {ControlsOnlyWidget, DrillDownConfig} from '../../../../libs/DatalensChartkit/types';
-import {useChartActions} from '../helpers/chart-actions';
 import type {ChartContentProps, ChartControlsType, OnLoadChartkitData} from '../types';
 
 import '../ChartWidget.scss';
@@ -81,10 +80,11 @@ export const Content = (props: ChartContentProps) => {
         paneSplitOrientation,
         widgetDashState,
         rootNodeRef,
-        runAction,
+        runActivity,
         backgroundColor,
         showActionParamsFilter,
         onFiltersClear,
+        reload,
     } = props;
 
     const [isExportLoading, setIsExportLoading] = React.useState(false);
@@ -120,8 +120,6 @@ export const Content = (props: ChartContentProps) => {
     const showContentLoader = showLoader || isExportLoading;
     const showLoaderVeil = veil && !isExportLoading;
 
-    const {onAction} = useChartActions({onChange});
-
     const isFirstLoadingFloat = loadedData === null;
 
     // chartkit doesn't call onLoad when spltTooltip is enabled
@@ -130,8 +128,6 @@ export const Content = (props: ChartContentProps) => {
     const chartInnerLoaderComponent = isFirstLoadingFloat
         ? emptyLoaderComponent
         : renderPluginLoader;
-
-    const {ChartHeader} = registry.chart.components.getAll();
 
     const handleRender = React.useCallback(
         (args: OnLoadChartkitData) => {
@@ -174,6 +170,7 @@ export const Content = (props: ChartContentProps) => {
                         onFullscreenClick={onFullscreenClick}
                         showActionParamsFilter={showActionParamsFilter}
                         onFiltersClear={onFiltersClear}
+                        reload={reload}
                     />
                 </React.Fragment>
             )}
@@ -195,8 +192,7 @@ export const Content = (props: ChartContentProps) => {
                         getControls={getControls}
                         nonBodyScroll={nonBodyScroll}
                         initialParams={initialParams}
-                        runAction={runAction}
-                        onAction={onAction}
+                        runActivity={runActivity}
                     />
                 )}
                 {Boolean(drillDownData) && (
@@ -227,6 +223,7 @@ export const Content = (props: ChartContentProps) => {
                     widgetDashState={widgetDashState}
                     rootNodeRef={rootNodeRef}
                     backgroundColor={backgroundColor}
+                    runActivity={runActivity}
                 />
                 {showChartOverlay && (
                     <div

@@ -195,8 +195,7 @@ export const getOpenAsTableMenuItem = ({
         const {loadedData, error} = args;
         const customIsVisible = customConfig?.isVisible?.(args) ?? true;
         const isExportAllowed =
-            !loadedData?.extra.dataExportForbidden &&
-            !isExportItemDisabled({extraOptions: extraOptions})(args);
+            !loadedData?.extra.dataExportForbidden && !isExportItemDisabled()(args);
         const isCriticalError = error && !error?.extra?.rowsExceededLimit;
         const isChart =
             loadedData?.data &&

@@ -1,10 +1,13 @@
-import type {ValueOf} from '../types';
+import {type ValueOf} from '../types';
 
 export const CustomPaletteBgColors = {
     LIKE_CHART: 'like-chart-bg',
     NONE: 'transparent',
 } as const;
 
+export const TRANSPARENT_COLOR_HEX = '#00000000';
+
+export const LIKE_CHART_COLOR_TOKEN = 'var(--g-color-base-float)';
 export const BASE_GREY_BACKGROUND_COLOR = 'var(--g-color-base-generic)';
 
 export type CustomPaletteBgColor = ValueOf<typeof CustomPaletteBgColors>;
@@ -97,4 +100,12 @@ export const CONTROLS_PLACEMENT_MODE = {
     AUTO: 'auto',
     PERCENT: '%',
     PIXELS: 'px',
-};
+} as const;
+
+// TODO: replace by DEFAULT_WIDGET_BACKGROUND_COLOR constant after removing flag Feature.EnableCommonChartDashSettings
+export function getDefaultWidgetBackgroundColor(
+    isCommonChartDashSettingsEnabled?: boolean,
+    defaultColor: string = CustomPaletteBgColors.NONE,
+) {
+    return isCommonChartDashSettingsEnabled ? '' : defaultColor;
+}

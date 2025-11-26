@@ -6,11 +6,7 @@ import {EntryScope, Feature} from '../../../shared';
  * Which sections should be allowed to show a new panel with versions
  */
 export function getEntryScopesWithRevisionsList(): EntryScope[] {
-    const arr = [EntryScope.Dash, EntryScope.Widget];
-    if (DatasetUtils.isEnabledFeature(Feature.EnableDatasetRevisions)) {
-        arr.push(EntryScope.Dataset);
-    }
-    return arr;
+    return [EntryScope.Dash, EntryScope.Widget, EntryScope.Dataset, EntryScope.Connection];
 }
 
 /**

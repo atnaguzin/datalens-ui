@@ -169,7 +169,6 @@ function getDataset({id, workbookId}: GetDatasetArgs) {
         .sdk.bi.getDatasetByVersion({
             datasetId: id,
             workbookId,
-            version: 'draft',
         })
         .then((dataset) => {
             if (dataset && dataset.key) {
@@ -237,6 +236,10 @@ export function fetchDataset({id, replacing}: FetchDatasetArgs) {
                     [id]: dataset,
                 };
                 dispatch(setOriginalDatasets({originalDatasets: updatedOriginalDatasets}));
+
+                if (Object.keys(updatedOriginalDatasets).length > 1) {
+                    dispatch(setSort({sort: []}));
+                }
 
                 const {
                     dataset: {datasets, dimensions, measures} = {
@@ -1230,11 +1233,12 @@ const validateDataset = ({dataset, updates}: {dataset: Dataset; updates: Update[
         try {
             return await getSdk().sdk.bi.validateDataset(
                 {
-                    version: 'draft',
                     datasetId: dataset.id,
                     workbookId,
-                    dataset: dataset.dataset,
-                    updates: preparedUpdates,
+                    data: {
+                        dataset: dataset.dataset,
+                        updates: preparedUpdates,
+                    },
                 },
                 {timeout: TIMEOUT_95_SEC},
             );
@@ -1384,7 +1388,11 @@ export const createFieldFromVisualization = ({
             fieldNext.avatar_id = field.avatar_id;
         }
 
-        if (field.grouping && field.grouping !== 'none') {
+        if (field.grouping && field.grouping !== 'none' && !quickFormula) {
+            fieldNext.grouping = 'none';
+        }
+
+        if (field.grouping && field.grouping !== 'none' && quickFormula) {
             const [operation, mode] = field.grouping.split('-');
 
             let functionName;
@@ -1861,6 +1869,9 @@ function processWidget(args: ProcessWidgetArgs) {
 
             dispatch(setDatasetApiErrors({datasetApiErrors}));
             dispatch(setOriginalDatasets({originalDatasets}));
+            if (Object.keys(originalDatasets).length > 1) {
+                dispatch(setSort({sort: []}));
+            }
 
             return loadedOriginalDatasets;
         })
@@ -2145,7 +2156,7 @@ export function setDefaults(args: SetDefaultsArgs) {
     const {entryId, revId, routeWorkbookId, unreleased} = args;
     return async function (dispatch: WizardDispatch, getState: () => DatalensGlobalState) {
         const searchPairs = new URLSearchParams(window.location.search);
-        const entryConfigParam = searchPairs.get(URL_QUERY.ENTRY_CONFIG);
+        const localConfigParam = searchPairs.get(URL_QUERY.LOCAL_CONFIG);
 
         if (routeWorkbookId) {
             dispatch(setRouteWorkbookId(routeWorkbookId));
@@ -2160,9 +2171,15 @@ export function setDefaults(args: SetDefaultsArgs) {
                 }),
             );
         } else {
-            if (entryConfigParam) {
+            if (localConfigParam) {
                 try {
-                    const config = JSON.parse(entryConfigParam);
+                    const config = JSON.parse(String(localStorage.getItem(URL_QUERY.LOCAL_CONFIG)));
+                    localStorage.removeItem(URL_QUERY.LOCAL_CONFIG);
+                    searchPairs.delete(URL_QUERY.LOCAL_CONFIG);
+                    history.replace({
+                        ...location,
+                        search: `?${searchPairs.toString()}`,
+                    });
                     await processWidget({widget: {data: config}, dispatch, getState});
                 } catch (e) {
                     console.error(e);

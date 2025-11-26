@@ -1,5 +1,5 @@
 import type {ConnectorType} from '../constants';
-import type {Permissions} from '../types';
+import type {CommonNumberFormattingOptions, Permissions} from '../types';
 
 import type {CommonUpdate} from './common-update';
 
@@ -128,6 +128,7 @@ export interface Dataset {
         load_preview_by_default: boolean;
         template_enabled: boolean;
         data_export_forbidden?: boolean;
+        description?: string;
     };
     workbook_id?: string;
     permissions?: Permissions;
@@ -201,6 +202,15 @@ export interface DatasetField {
     ui_settings?: string;
 }
 
+export type DatasetFieldColorConfig = {
+    palette?: string;
+    colors?: Record<string, string>;
+};
+
+export type FieldUISettings = {
+    numberFormatting?: CommonNumberFormattingOptions;
+} & DatasetFieldColorConfig;
+
 export interface DatasetFieldError {
     guid: string;
     title: string;
@@ -225,6 +235,16 @@ export type DatasetOptionFieldItem = {
     casts: DATASET_FIELD_TYPES[];
     guid: string;
 };
+
+export interface SourceListingOptions {
+    source_listing?: {
+        supports_source_search: boolean;
+        supports_source_pagination: boolean;
+        supports_db_name_listing: boolean;
+        db_name_label: string;
+        db_name_required_for_search: boolean;
+    };
+}
 
 export interface DatasetOptions {
     connections: {

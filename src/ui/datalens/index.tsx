@@ -220,7 +220,7 @@ const DatalensPage: React.FC = () => {
         return (
             <MobileHeaderComponent 
                 renderContent={() => <DatalensPageView token={token} setToken={setToken} superUser={superUser} setSuperUser={setSuperUser} /> }
-                installationInfo={OPEN_SOURCE_INSTALLATION_INFO}
+                logoTextProps={{installationInfo: OPEN_SOURCE_INSTALLATION_INFO}}
             /> 
         );
     }
@@ -230,7 +230,7 @@ const DatalensPage: React.FC = () => {
             <AsideHeaderAdapter 
                 superUser={superUser} 
                 renderContent={() => <DatalensPageView token={token} setToken={setToken} superUser={superUser} setSuperUser={setSuperUser} />} 
-                installationInfo={OPEN_SOURCE_INSTALLATION_INFO}
+                logoTextProps={{installationInfo: OPEN_SOURCE_INSTALLATION_INFO}}
             />
         );
     }

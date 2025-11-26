@@ -11,7 +11,7 @@ import type {OpenDialogNeedResetArgs} from '../../components/OpenDialogNeedReset
 import type {OpenDialogChartSettingsArgs} from '../../units/wizard/components/Dialogs/Settings/Settings';
 import type {
     OpenDialogCreateConnectionArgs,
-    OpenDialogCreateConnectionInWbArgs,
+    OpenDialogCreateConnectionInWbOrCollectionArgs,
 } from '../../units/connections/components';
 import type {OpenDialogConfirmArgs} from '../../components/DialogConfirm/DialogConfirm';
 import type {OpenDialogWarningArgs} from '../../components/DialogWarning/DialogWarning';
@@ -50,6 +50,7 @@ import type {OpenDialogDeleteCollectionArgs} from '../../components/CollectionsS
 import type {OpenDialogDeleteCollectionsWorkbooksArgs} from '../../components/CollectionsStructure/DeleteCollectionsWorkbooksDialog';
 import type {OpenDialogDeleteWorkbookArgs} from '../../components/CollectionsStructure/DeleteWorkbookDialog';
 import type {OpenDialogCreateEntryInWorkbookArgs} from '../../components/CollectionsStructure/CreateEntryInWorkbookDialog';
+import type {OpenDialogCreateEntryInCollectionArgs} from '../../components/CollectionsStructure/CreateEntryInCollectionDialog';
 import type {OpenDialogIamAccessArgs} from '../../components/IamAccessDialog';
 import type {OpenDialogAssignClaimsArgs} from '../../components/OpenDialogAssignClaims/OpenDialogAssignClaims';
 import { OpenDialogShareArgs } from 'ui/components/OpenDialogShare/OpenDialogShare';
@@ -62,6 +63,10 @@ import type {OpenDialogExportWorkbookArgs} from 'ui/components/CollectionsStruct
 import type {OpenDialogDefaultArgs} from 'ui/components/DialogDefault/DialogDefault';
 import type {OpenDialogCreatePublicGalleryWorkbookArgs} from 'ui/components/CollectionsStructure/CreatePublicGalleryWorkbookDialog';
 import type {OpenDialogEntryDescriptionArgs} from 'ui/components/DialogEntryDescription/DialogEntryDescriptionWrapper';
+import type {OpenDialogSharedEntryBindingArgs} from 'ui/components/DialogSharedEntryBindings/DialogSharedEntryBindings';
+import type {OpenDialogSharedEntryUnbindArgs} from 'ui/components/DialogSharedEntryUnbind/DialogSharedEntryUnbind';
+import type {OpenDialogSharedEntryPermissionsArgs} from 'ui/components/DialogSharedEntryPermissions/DialogSharedEntryPermissions';
+import type {OpenDialogSelectSharedEntryArgs} from 'ui/components/DialogSelectSharedEntry/DialogSelectSharedEntry';
 
 export type OpenDialogArgs<T = unknown> =
     | OpenDialogReleaseVersionArgs
@@ -78,7 +83,7 @@ export type OpenDialogArgs<T = unknown> =
     | OpenDialogNeedResetArgs
     | OpenDialogChartSettingsArgs
     | OpenDialogCreateConnectionArgs
-    | OpenDialogCreateConnectionInWbArgs
+    | OpenDialogCreateConnectionInWbOrCollectionArgs
     | OpenDialogWarningArgs
     | OpenDialogConfirmArgs
     | OpenDialogDatasetFieldInspectorArgs
@@ -116,13 +121,15 @@ export type OpenDialogArgs<T = unknown> =
     | OpenDialogDeleteWorkbookArgs
     | OpenDialogIamAccessArgs
     | OpenDialogCreateEntryInWorkbookArgs
-    | OpenDialogAssignClaimsArgs
-    | OpenDialogShareArgs
-    | OpenDialogExportPdfArgs
+    | OpenDialogCreateEntryInCollectionArgs
     | OpenDialogTooltipSettingsArgs
     | OpenDialogChangeDatasetFieldsArgs
     | OpenDialogCollectionNoCreatePermissionArgs
     | OpenDialogExportWorkbookArgs
     | OpenDialogDefaultArgs
     | OpenDialogCreatePublicGalleryWorkbookArgs
+    | OpenDialogSharedEntryBindingArgs
+    | OpenDialogSharedEntryUnbindArgs
+    | OpenDialogSharedEntryPermissionsArgs
+    | OpenDialogSelectSharedEntryArgs
     | OpenDialogEntryDescriptionArgs;

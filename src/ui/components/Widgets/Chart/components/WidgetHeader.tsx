@@ -8,9 +8,9 @@ import DebugInfoTool from 'components/DashKit/plugins/DebugInfoTool/DebugInfoToo
 import type {CurrentTab} from 'components/DashKit/plugins/Widget/types';
 import {useDispatch} from 'react-redux';
 import {ChartkitMenuDialogsQA} from 'shared';
+import {Header as ChartHeader} from 'ui/components/Widgets/Chart/components/Header';
 import {DL} from 'ui/constants/common';
 import {DL_ADAPTIVE_TABS_BREAK_POINT_CONFIG} from 'ui/constants/misc';
-import {registry} from 'ui/registry';
 import {setSkipReload} from 'ui/units/dash/store/actions/dashTyped';
 import {MOBILE_SIZE} from 'ui/utils/mobile';
 
@@ -83,6 +83,7 @@ export type HeaderWithControlsProps = HeaderProps &
         ) => void;
 
         setIsExportLoading: (arg: boolean) => void;
+        reload?: (args?: {silentLoading?: boolean; noVeil?: boolean}) => void;
     };
 
 const b = block('widget-header');
@@ -117,8 +118,6 @@ export const WidgetHeader = (props: HeaderProps | HeaderWithControlsProps) => {
 
     const dispatch = useDispatch();
 
-    const {ChartHeader} = registry.chart.components.getAll();
-
     const handleExportLoading = React.useCallback(
         (isLoading: boolean) => {
             setIsExportLoading?.(isLoading);
@@ -145,9 +144,6 @@ export const WidgetHeader = (props: HeaderProps | HeaderWithControlsProps) => {
                         <MarkdownHelpPopover
                             markdown={widgetTitleHint}
                             className={b('chart-title-hint')}
-                            buttonProps={{
-                                className: b('chart-title-hint-button'),
-                            }}
                             onClick={handleClickHint}
                         />
                     )}
@@ -250,6 +246,7 @@ export const WidgetHeader = (props: HeaderProps | HeaderWithControlsProps) => {
                     showActionParamsFilter={showActionParamsFilter}
                     onFiltersClear={onFiltersClear}
                     canBeDisplayedFilters={true}
+                    reload={headerWithControlsProps.reload}
                 />
             </div>
         </React.Fragment>

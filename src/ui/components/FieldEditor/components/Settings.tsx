@@ -25,6 +25,9 @@ import {NameHeader} from './NameHeader';
 const b = block('dl-field-editor');
 const i18n = I18n.keyset('component.dl-field-editor.view');
 
+const MIN_NAME_INPUT_WIDTH = 300;
+const NAME_INPUT_OFFSET = 44;
+
 interface SettingsProps {
     modifyField: ModifyField;
     toggleDocumentationPanel: () => void;
@@ -46,12 +49,29 @@ export const Settings: React.FC<SettingsProps> = ({
     isNewField,
 }) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
-    const [titleEditMode, setTitleEditMode] = React.useState(!title);
+
+    const fakeInputTitleRef = React.useRef<HTMLSpanElement>(null);
+    const [inputTitleWidth, setInputTitleWidth] = React.useState(MIN_NAME_INPUT_WIDTH);
 
     const {AdditionalButtonsWrapper} = registry.fieldEditor.components.getAll();
 
+    const updateTitleInputWidth = React.useCallback((inputTitle = '') => {
+        if (fakeInputTitleRef.current) {
+            fakeInputTitleRef.current.textContent = inputTitle;
+            setInputTitleWidth(
+                Math.max(
+                    fakeInputTitleRef.current.offsetWidth + NAME_INPUT_OFFSET,
+                    MIN_NAME_INPUT_WIDTH,
+                ),
+            );
+        }
+    }, []);
+
     React.useEffect(() => {
-        inputRef.current?.focus();
+        setTimeout(() => {
+            updateTitleInputWidth(title);
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const onChangeTitle = (inputTitle: string) => {
@@ -77,6 +97,8 @@ export const Settings: React.FC<SettingsProps> = ({
     const errorMessageKey = getErrorMessageKey([DUPLICATE_TITLE, EMPTY_TITLE], errors);
     const showDocButton = isEnabledFeature(Feature.FieldEditorDocSection) && calcMode === 'formula';
 
+    const [titleEditMode, setTitleEditMode] = React.useState(!title || Boolean(errorMessageKey));
+
     const handleStartEditTitle = React.useCallback(() => {
         setTitleEditMode(true);
         setTimeout(() => {
@@ -85,10 +107,16 @@ export const Settings: React.FC<SettingsProps> = ({
     }, []);
 
     const handleStopEditTitle = React.useCallback(() => {
-        if (inputTitle) {
+        if (inputTitle && !errorMessageKey) {
             setTitleEditMode(false);
         }
-    }, [inputTitle]);
+    }, [inputTitle, errorMessageKey]);
+
+    React.useEffect(() => {
+        if (errorMessageKey) {
+            setTitleEditMode(true);
+        }
+    }, [errorMessageKey]);
 
     return (
         <React.Fragment>
@@ -99,6 +127,9 @@ export const Settings: React.FC<SettingsProps> = ({
                             className={b('settings-field-name')}
                             controlProps={{
                                 className: b('settings-field-name-input'),
+                            }}
+                            style={{
+                                width: inputTitleWidth,
                             }}
                             controlRef={inputRef}
                             qa="field-name"
@@ -118,11 +149,16 @@ export const Settings: React.FC<SettingsProps> = ({
                                 }
                             }}
                             onBlur={handleStopEditTitle}
+                            hasClear={true}
                         />
                     ) : (
                         <NameHeader title={inputTitle} onStartEdit={handleStartEditTitle} />
                     )
                 }
+            />
+            <span
+                ref={fakeInputTitleRef}
+                className={b('settings-field-name-input', {fake: true})}
             />
             <div className={b('settings')}>
                 {!onlyFormulaEditor && (

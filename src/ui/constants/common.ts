@@ -171,7 +171,8 @@ export const DL = {
     get IS_NOT_AUTHENTICATED() {
         return (
             this.LANDING_PAGE_ERROR_TYPE === ErrorContentTypes.NOT_AUTHENTICATED ||
-            this.LANDING_PAGE_ERROR_TYPE === ErrorContentTypes.NOT_AUTHENTICATED_GALLERY
+            this.LANDING_PAGE_ERROR_TYPE === ErrorContentTypes.NOT_AUTHENTICATED_GALLERY ||
+            this.LANDING_PAGE_ERROR_TYPE === ErrorContentTypes.NOT_AUTHENTICATED_FESTIVAL
         );
     },
     get PUSH_SERVICE_CONFIG() {
@@ -383,7 +384,7 @@ export const URL_QUERY = {
     DEBUG: '_debug',
     OPEN_DASH_INFO: '_opened_info',
     UNRELEASED: 'unreleased',
-    ENTRY_CONFIG: '_entry_config',
+    LOCAL_CONFIG: '_use_local_config',
 };
 
 const GRADIENT_ICONS = {
@@ -418,19 +419,11 @@ export const getAvailableClientPalettesMap = () => {
         ...DL.EXTRA_PALETTES,
     };
 
-    if (!isEnabledFeature(Feature.NewDefaultPalette)) {
-        delete palettes[PALETTES.default20.id];
-    }
-
     return palettes;
 };
 
 export function getDefaultColorPaletteId() {
-    if (isEnabledFeature(Feature.NewDefaultPalette) && window.DL.defaultColorPaletteId) {
-        return window.DL.defaultColorPaletteId;
-    }
-
-    return PALETTES.classic.id;
+    return window.DL.defaultColorPaletteId ?? PALETTES.classic.id;
 }
 
 export function getTenantDefaultColorPaletteId() {

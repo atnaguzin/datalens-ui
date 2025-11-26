@@ -11,41 +11,44 @@ const i18n = I18n.keyset('component.collections-structure');
 
 const b = block('dl-collection-dialog');
 
+export type CollectionDialogValues = {
+    title: string;
+    project: string;
+    description: string;
+};
+
+type CollectionDialogErrors = Partial<Record<keyof CollectionDialogValues, string>>;
+
 export type Props = {
+    values: CollectionDialogValues;
+    errors?: CollectionDialogErrors;
     title: string;
     textButtonApply: string;
     open: boolean;
     isLoading: boolean;
-    titleValue?: string;
-    descriptionValue?: string;
-    projectValue?: string;
     titleAutoFocus?: boolean;
-    onApply: (args: {title: string; project?: string; description: string}) => Promise<unknown>;
+    onChange: (values: CollectionDialogValues) => void;
+    onApply: (values: CollectionDialogValues, onClose: () => void) => Promise<unknown>;
     onClose: () => void;
 };
 
 export const CollectionDialog = React.memo<Props>(
     ({
+        values,
+        errors,
         title,
         textButtonApply,
         open,
         isLoading,
-        titleValue = '',
-        descriptionValue = '',
-        projectValue = '',
         titleAutoFocus = false,
         onApply,
+        onChange,
         onClose,
     }) => {
-        const [innerTitleValue, setInnerTitleValue] = React.useState(titleValue);
-        const [innerProjectValue, setInnerProjectValue] = React.useState([projectValue]);
-        const [innerDescriptionValue, setInnerDescriptionValue] = React.useState(descriptionValue);
-
         var [projects, setProjects] = React.useState([]);
         var [projectDefault, setProjectDefault] = React.useState("");
 
         React.useEffect(() => {
-
             Utils.projects({}).then((values)=>{
                 var results: any = [];
                 for(var idx in values) {
@@ -59,19 +62,23 @@ export const CollectionDialog = React.memo<Props>(
                 }
                 setProjects(results);
             })
+        });
 
-            if (open) {
-                setInnerTitleValue(titleValue);
-                setInnerProjectValue([projectValue]);
-                setInnerDescriptionValue(descriptionValue);
-            }
-        }, [open, titleValue, projectValue, descriptionValue]);
+        const handleChange = React.useCallback(
+            (params) => {
+                const {target} = params;
+
+                onChange({
+                    ...values,
+                    [target.name]: target.value,
+                });
+            },
+            [onChange, values],
+        );
 
         const handleApply = React.useCallback(() => {
-            onApply({title: innerTitleValue, project: innerProjectValue[0], description: innerDescriptionValue}).then(() => {
-                onClose();
-            });
-        }, [innerTitleValue, innerProjectValue, innerDescriptionValue, onApply, onClose]);
+            onApply(values, onClose);
+        }, [onApply, values, onClose]);
 
         return (
             <Dialog
@@ -86,21 +93,25 @@ export const CollectionDialog = React.memo<Props>(
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_title')}</div>
                         <TextInput
-                            value={innerTitleValue}
-                            onUpdate={setInnerTitleValue}
+                            name="title"
+                            value={values.title}
+                            error={errors?.title}
+                            onChange={handleChange}
                             autoFocus={titleAutoFocus}
                         />
                     </div>
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_project')}</div>
                         
-                        <Select defaultValue={[innerProjectValue[0] || projectDefault]} options={projects} onUpdate={setInnerProjectValue}/>
+                        <Select defaultValue={[values.project[0] || projectDefault]} options={projects} onUpdate={handleChange}/>
                     </div>
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_description')}</div>
                         <TextArea
-                            value={innerDescriptionValue}
-                            onUpdate={setInnerDescriptionValue}
+                            name="description"
+                            value={values.description}
+                            error={errors?.description}
+                            onChange={handleChange}
                             minRows={2}
                         />
                     </div>
@@ -110,7 +121,7 @@ export const CollectionDialog = React.memo<Props>(
                     onClickButtonApply={handleApply}
                     textButtonApply={textButtonApply}
                     propsButtonApply={{
-                        disabled: !innerTitleValue,
+                        disabled: !values.title,
                     }}
                     textButtonCancel={i18n('action_cancel')}
                     loading={isLoading}

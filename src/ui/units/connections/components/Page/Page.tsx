@@ -1,9 +1,10 @@
 import React from 'react';
 
+import {CodeTrunk} from '@gravity-ui/icons';
 import {Button, spacing} from '@gravity-ui/uikit';
 import block from 'bem-cn-lite';
 import {I18n} from 'i18n';
-import {get} from 'lodash';
+import get from 'lodash/get';
 import omit from 'lodash/omit';
 import {connect} from 'react-redux';
 import type {RouteChildrenProps} from 'react-router-dom';
@@ -13,16 +14,25 @@ import type {Dispatch} from 'redux';
 import {bindActionCreators} from 'redux';
 import {type ConnectorType, Feature} from 'shared';
 import type {DatalensGlobalState} from 'ui';
-import {PageTitle, SlugifyUrl, Utils} from 'ui';
+import {PageTitle, SlugifyUrl, URL_QUERY, Utils} from 'ui';
+import type {FilterEntryContextMenuItems} from 'ui/components/EntryContextMenu';
+import {ENTRY_CONTEXT_MENU_ACTION} from 'ui/components/EntryContextMenu';
 import {registry} from 'ui/registry';
-import {openDialogErrorWithTabs} from 'ui/store/actions/dialog';
+import {
+    closeDialog,
+    openDialog,
+    openDialogErrorWithTabs,
+    openDialogSaveDraftChartAsActualConfirm,
+} from 'ui/store/actions/dialog';
 import type {DataLensApiError} from 'ui/typings';
+import {getSharedEntryMockText} from 'ui/units/collections/components/helpers';
 import {isEnabledFeature} from 'ui/utils/isEnabledFeature';
 
 import type {ErrorViewProps} from '../';
 import {ErrorView, Router, WrappedLoader} from '../';
 import {AccessRightsUrlOpen} from '../../../../components/AccessRights/AccessRightsUrlOpen';
 import {ActionPanel} from '../../../../components/ActionPanel';
+import {DIALOG_SHARED_ENTRY_BINDINGS} from '../../../../components/DialogSharedEntryBindings/DialogSharedEntryBindings';
 import withErrorPage from '../../../../components/ErrorPage/withErrorPage';
 import {FieldKey} from '../../constants';
 import {
@@ -31,11 +41,12 @@ import {
     getConnectors,
     setInitialState,
     setPageData,
+    updateConnectionWithRevision,
 } from '../../store';
 import {getConnItemByType} from '../../utils';
 
 import ConnPanelActions from './ConnPanelActions';
-import {UnloadConfirmation} from './components';
+import {DescriptionButton, UnloadConfirmation} from './components';
 import {ConnSettings} from './components/ConnSettings';
 import {useApiErrors} from './useApiErrors';
 import {isListPageOpened, isS3BasedConnForm} from './utils';
@@ -53,15 +64,28 @@ type PageProps = DispatchProps &
 
 type PageContentProps = Omit<DispatchState, 'entry' | 'loading'> & {
     type: ConnectorType;
-    getConnectionData: () => void;
+    getConnectionData: (revId?: string) => void;
     getConnectors: () => void;
     getConnectorSchema: (type: ConnectorType) => void;
     openDialogErrorWithTabs: typeof openDialogErrorWithTabs;
+    revId?: string;
 };
 
 const PageContent = (props: PageContentProps) => {
-    const {type, apiErrors, flattenConnectors, groupedConnectors, connectionData} = props;
+    const {
+        type,
+        apiErrors,
+        flattenConnectors,
+        groupedConnectors,
+        connectionData,
+        revId,
+        getConnectionData,
+    } = props;
     const {error, scope, details} = useApiErrors({apiErrors});
+    const getConnectionDataHandler = React.useCallback(
+        () => getConnectionData(revId),
+        [revId, getConnectionData],
+    );
 
     if (error) {
         let handler: NonNullable<ErrorViewProps['action']>['handler'];
@@ -72,7 +96,7 @@ const PageContent = (props: PageContentProps) => {
                 if (details.includes('platform-permission-required')) {
                     content = (
                         <div style={{display: 'flex', columnGap: 10, marginTop: 20}}>
-                            <Button view="action" onClick={props.getConnectionData}>
+                            <Button view="action" onClick={getConnectionDataHandler}>
                                 {i18n('button_retry')}
                             </Button>
                             <Button
@@ -89,7 +113,7 @@ const PageContent = (props: PageContentProps) => {
                         </div>
                     );
                 } else {
-                    handler = props.getConnectionData;
+                    handler = getConnectionDataHandler;
                 }
                 break;
             }
@@ -131,19 +155,29 @@ const PageComponent = (props: PageProps) => {
     const {extractEntryId} = registry.common.functions.getAll();
     const extractedEntryId = extractEntryId(entryId);
     const workbookId = get(props.match?.params, 'workbookId');
+    const collectionId = get(props.match?.params, 'collectionId');
     const queryType = get(props.match?.params, 'type', '');
     const connectorType = entry?.type || queryType;
     const connector = getConnItemByType({connectors: flattenConnectors, type: connectorType});
     const type = (connector?.conn_type || queryType) as ConnectorType;
     const listPageOpened = isListPageOpened(location.pathname);
     const s3BasedFormOpened = isS3BasedConnForm(connectionData, type);
+    const currentSearchParams = new URLSearchParams(location.search);
+
+    const isFakeEntry = entry && (entry as {fake?: boolean}).fake;
 
     const isExportSettingsFeatureEnabled = isEnabledFeature(Feature.EnableExportSettings);
+    const isDescriptionEnabled = isEnabledFeature(Feature.EnableConnectionDescription);
+
+    const revisionsSupported = connector?.history;
+    const revId = currentSearchParams.get(URL_QUERY.REV_ID) ?? undefined;
+
+    const isSharedConnection = Boolean(entry?.collectionId);
 
     const showSettings = !connector?.backend_driven_form;
     let isShowCreateButtons = true;
 
-    if (entry?.workbookId && !(entry as {fake?: boolean}).fake) {
+    if (entry?.workbookId && !isFakeEntry) {
         isShowCreateButtons = Boolean(entry.permissions?.edit);
     }
 
@@ -160,8 +194,69 @@ const PageComponent = (props: PageProps) => {
     }, [actions, type, listPageOpened]);
 
     React.useEffect(() => {
-        actions.setPageData({entryId: extractedEntryId, workbookId});
-    }, [actions, extractedEntryId, workbookId]);
+        actions.setPageData({
+            entryId: extractedEntryId,
+            workbookId,
+            collectionId,
+            rev_id: revId,
+        });
+    }, [actions, extractedEntryId, workbookId, revId, collectionId]);
+
+    const setActualVersion = React.useMemo(
+        () =>
+            revisionsSupported
+                ? () => {
+                      actions.openDialogSaveDraftChartAsActualConfirm({
+                          onApply: () => {
+                              actions.updateConnectionWithRevision();
+                          },
+                      });
+                  }
+                : undefined,
+        [revisionsSupported, actions],
+    );
+
+    const filterEntryContextMenuItems: FilterEntryContextMenuItems = React.useCallback(
+        ({items}) => {
+            return items.filter((item) => {
+                if (
+                    isSharedConnection &&
+                    item.id === ENTRY_CONTEXT_MENU_ACTION.SHOW_RELATED_ENTITIES
+                ) {
+                    return false;
+                }
+                if (!revisionsSupported && item.id === ENTRY_CONTEXT_MENU_ACTION.REVISIONS) {
+                    return false;
+                }
+                return true;
+            });
+        },
+        [revisionsSupported, isSharedConnection],
+    );
+
+    const additionalEntryItems = React.useMemo(
+        () =>
+            isSharedConnection && entry && !isFakeEntry
+                ? [
+                      {
+                          id: ENTRY_CONTEXT_MENU_ACTION.SHOW_RELATED_ENTITIES,
+                          action: () => {
+                              actions.openDialog({
+                                  id: DIALOG_SHARED_ENTRY_BINDINGS,
+                                  props: {
+                                      onClose: actions.closeDialog,
+                                      open: true,
+                                      entry,
+                                  },
+                              });
+                          },
+                          icon: <CodeTrunk />,
+                          text: getSharedEntryMockText('shared-entry-bindings-dropdown-menu-title'),
+                      },
+                  ]
+                : undefined,
+        [isSharedConnection, entry, isFakeEntry, actions],
+    );
 
     return (
         <React.Fragment>
@@ -184,6 +279,12 @@ const PageComponent = (props: PageProps) => {
                                     connectionId={extractedEntryId}
                                 />
                             ),
+                            isDescriptionEnabled && (
+                                <DescriptionButton
+                                    key="connection-description"
+                                    isS3BasedConnForm={s3BasedFormOpened}
+                                />
+                            ),
                             isShowCreateButtons && (
                                 <ConnPanelActions
                                     key="conn-panel-actions"
@@ -194,6 +295,9 @@ const PageComponent = (props: PageProps) => {
                                 />
                             ),
                         ]}
+                        setActualVersion={setActualVersion}
+                        filterEntryContextMenuItems={filterEntryContextMenuItems}
+                        additionalEntryItems={additionalEntryItems}
                     />
                 )}
                 {loading || !entry ? (
@@ -209,6 +313,7 @@ const PageComponent = (props: PageProps) => {
                         getConnectors={actions.getConnectors}
                         getConnectorSchema={actions.getConnectorSchema}
                         openDialogErrorWithTabs={actions.openDialogErrorWithTabs}
+                        revId={revId}
                     />
                 )}
             </div>
@@ -238,6 +343,10 @@ const mapDispatchToProps = (dispatch: Dispatch) => {
                 getConnectors,
                 getConnectorSchema,
                 openDialogErrorWithTabs,
+                openDialogSaveDraftChartAsActualConfirm,
+                updateConnectionWithRevision,
+                openDialog,
+                closeDialog,
             },
             dispatch,
         ),

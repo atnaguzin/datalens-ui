@@ -742,6 +742,9 @@ export class DataFetcher {
         ];
         if (Array.isArray(proxyHeaders)) {
             proxyHeaders.forEach((headerName) => {
+                if (sourceConfig.isExternal && headerName.toLowerCase().startsWith('x-dl')) {
+                    return;
+                }
                 if (subrequestHeaders[headerName]) {
                     headers[headerName] = subrequestHeaders[headerName];
                 }

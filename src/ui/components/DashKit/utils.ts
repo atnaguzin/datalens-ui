@@ -1,9 +1,10 @@
-import type React from 'react';
+import React from 'react';
 import type {CSSProperties} from 'react';
 
 import type {PluginWidgetProps} from '@gravity-ui/dashkit';
-import type {DashTabItemControlElement} from 'shared';
-import {CustomPaletteBgColors} from 'shared/constants/widgets';
+import {type ThemeType, useThemeType} from '@gravity-ui/uikit';
+import type {BackgroundSettings, DashTabItemControlElement} from 'shared';
+import {CustomPaletteBgColors, LIKE_CHART_COLOR_TOKEN} from 'shared/constants/widgets';
 
 import {DL} from '../../constants';
 import {
@@ -271,24 +272,83 @@ export function getControlHint(source: DashTabItemControlElement) {
 }
 
 export function getPreparedWrapSettings(
-    showBgColor: boolean,
-    color?: string,
+    backgroundColor: string | undefined,
     additionalStyle?: CSSProperties,
-    textColor?: string,
 ) {
-    const wrapperClassMod =
-        (showBgColor &&
-            (color === CustomPaletteBgColors.LIKE_CHART ? 'with-default-color' : 'with-color')) ||
-        '';
+    const hasBgColor = Boolean(backgroundColor) && backgroundColor !== CustomPaletteBgColors.NONE;
+
+    const newBackgroundColor =
+        backgroundColor === CustomPaletteBgColors.LIKE_CHART
+            ? LIKE_CHART_COLOR_TOKEN
+            : backgroundColor;
 
     const style: CSSProperties = {
         ...additionalStyle,
         backgroundColor:
-            !showBgColor || color === CustomPaletteBgColors.LIKE_CHART ? undefined : color,
-        color: textColor,
+            hasBgColor || backgroundColor === CustomPaletteBgColors.NONE
+                ? newBackgroundColor
+                : undefined,
     };
     return {
-        classMod: wrapperClassMod,
         style,
+        hasBgColor,
     };
+}
+
+export function useTextColorStyles(textColor?: string) {
+    // const theme = useThemeType(); // it would be used in next PR
+    return React.useMemo(
+        () => ({
+            color: textColor,
+        }),
+        [textColor /* , theme */],
+    );
+}
+
+export function usePreparedWrapSettings({
+    widgetBackground,
+    globalBackground,
+    additionalStyle,
+    defaultOldColor,
+}: {
+    widgetBackground: BackgroundSettings | undefined;
+    globalBackground: BackgroundSettings | undefined;
+    additionalStyle?: CSSProperties;
+    defaultOldColor: string;
+}) {
+    const theme = useThemeType();
+    return React.useMemo(
+        () =>
+            getPreparedWrapSettings(
+                getResultedBgColor(widgetBackground, theme, defaultOldColor) ??
+                    getResultedBgColor(globalBackground, theme, defaultOldColor),
+                additionalStyle,
+            ),
+        [widgetBackground, globalBackground, additionalStyle, theme, defaultOldColor],
+    );
+}
+
+function getResultedBgColor(
+    bgColor: BackgroundSettings | undefined,
+    _theme: ThemeType, // it would be used in next PR
+    defaultColor: string,
+): string | undefined {
+    if (!bgColor) {
+        return defaultColor;
+    }
+    if (typeof bgColor.color === 'string' || bgColor.color === undefined) {
+        if ('enabled' in bgColor && bgColor.enabled === false) {
+            if (bgColor.color === CustomPaletteBgColors.NONE) {
+                // where was a bug, when new widgets were created with background color set to transparent, but enabled set to false
+                return CustomPaletteBgColors.NONE;
+            }
+            return defaultColor;
+        }
+        if (!bgColor.color) {
+            return defaultColor;
+        }
+        return bgColor.color;
+    }
+
+    return defaultColor;
 }

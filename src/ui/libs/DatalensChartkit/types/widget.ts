@@ -1,4 +1,5 @@
 import type {ChartKitType, ChartKitProps as OpenSourceChartKitProps} from '@gravity-ui/chartkit';
+import type {ChartSeriesData} from '@gravity-ui/chartkit/gravity-charts';
 import type {
     Highcharts,
     HighchartsComment,
@@ -12,6 +13,7 @@ import type {Optional, Required} from 'utility-types';
 
 import type {
     ApiV2DataExportField,
+    ChartActivityResponseData,
     ChartkitHandlers,
     ChartsInsightsItem,
     GraphTooltipLine,
@@ -90,6 +92,7 @@ export interface WidgetBase {
     initialParams?: StringParams;
     config?: {
         drillDown?: DrillDownConfig;
+        hideComments?: boolean;
         comments?: {
             matchedParams: Array<any>;
             feeds: {
@@ -397,3 +400,10 @@ export type OnChangeData = ParamsChangedOnChange | YMapGeoObjectVisibilityChange
 export type LoadedWidgetData<TProviderData = unknown> = (Widget & TProviderData) | null;
 
 export type WidgetData = (Widget & ChartsData) | null;
+
+export type OnActivityComplete = (args: {responseData?: ChartActivityResponseData | null}) => void;
+
+export type RunActivityArgs = {
+    params?: StringParams | ChartSeriesData;
+};
+export type RunActivityFn = (args: RunActivityArgs) => void;

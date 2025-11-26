@@ -1,3 +1,4 @@
+import type {ChartData} from '@gravity-ui/chartkit/gravity-charts';
 import {transformParamsToActionParams} from '@gravity-ui/dashkit/helpers';
 import {type AppContext, REQUEST_ID_PARAM_NAME} from '@gravity-ui/nodekit';
 import {AxiosError} from 'axios';
@@ -16,7 +17,7 @@ import type {
     StringParams,
     WorkbookId,
 } from '../../../../../shared';
-import {DL_CONTEXT_HEADER, Feature} from '../../../../../shared';
+import {DL_CONTEXT_HEADER, Feature, WizardType} from '../../../../../shared';
 import {renderHTML} from '../../../../../shared/modules/markdown/markdown';
 import {selectServerPalette} from '../../../../constants';
 import {extractColorPalettesFromData} from '../../../../modes/charts/plugins/helpers/color-palettes';
@@ -111,6 +112,36 @@ function collectModulesLogs({
         });
         logsStorage.modules = logsStorage.modules.concat(module.logs || []);
     });
+}
+
+export function stringifyLogs({
+    logs,
+    hooks,
+    ctx,
+}: {
+    logs: ProcessorLogs;
+    hooks: ProcessorHooks;
+    ctx: AppContext;
+}) {
+    try {
+        const formatter = hooks.getLogsFormatter();
+        return JSON.stringify(logs, (_, value: string | number) => {
+            if (typeof value === 'number' && isNaN(value)) {
+                return '__special_value__NaN';
+            }
+            if (value === Infinity) {
+                return '__special_value__Infinity';
+            }
+            if (value === -Infinity) {
+                return '__special_value__-Infinity';
+            }
+            return formatter ? formatter(value) : value;
+        });
+    } catch (e) {
+        ctx.logError('Error during formatting logs', e);
+
+        return '';
+    }
 }
 
 function mergeArrayWithObject(a: [], b: {}) {
@@ -242,8 +273,6 @@ export class Processor {
 
         const isEnabledServerFeature = ctx.get('isEnabledServerFeature');
 
-        const isUseDataExportFieldEnabled = isEnabledServerFeature(Feature.EnableBackendExportInfo);
-
         const timings: {
             configResolving: number;
             dataFetching: null | number;
@@ -295,35 +324,13 @@ export class Processor {
             return target;
         }
 
-        function stringifyLogs(localLogs: ProcessorLogs, localHooks: ProcessorHooks) {
-            try {
-                const formatter = localHooks.getLogsFormatter();
-                return JSON.stringify(localLogs, (_, value: string | number) => {
-                    if (typeof value === 'number' && isNaN(value)) {
-                        return '__special_value__NaN';
-                    }
-                    if (value === Infinity) {
-                        return '__special_value__Infinity';
-                    }
-                    if (value === -Infinity) {
-                        return '__special_value__-Infinity';
-                    }
-                    return formatter ? formatter(value) : value;
-                });
-            } catch (e) {
-                ctx.logError('Error during formatting logs', e);
-
-                return '';
-            }
-        }
-
         function injectLogs({
             target,
         }: {
             target: ProcessorSuccessResponse | Partial<ProcessorErrorResponse>;
         }) {
             if (responseOptions.includeLogs) {
-                target.logs_v2 = stringifyLogs(logs, hooks);
+                target.logs_v2 = stringifyLogs({logs, hooks, ctx});
             }
         }
 
@@ -882,18 +889,16 @@ export class Processor {
                 result.extra.chartsInsights = jsTabResults.runtimeMetadata.chartsInsights;
                 result.extra.sideMarkdown = jsTabResults.runtimeMetadata.sideMarkdown;
 
-                if (isUseDataExportFieldEnabled) {
-                    result.dataExport = mapValues(data, (sourceResponse) => {
-                        if (
-                            typeof sourceResponse === 'object' &&
-                            sourceResponse &&
-                            'data_export' in sourceResponse
-                        ) {
-                            return sourceResponse.data_export as ApiV2DataExportField;
-                        }
-                        return undefined;
-                    });
-                }
+                result.dataExport = mapValues(data, (sourceResponse) => {
+                    if (
+                        typeof sourceResponse === 'object' &&
+                        sourceResponse &&
+                        'data_export' in sourceResponse
+                    ) {
+                        return sourceResponse.data_export as ApiV2DataExportField;
+                    }
+                    return undefined;
+                });
 
                 const colors = selectServerPalette({
                     defaultColorPaletteId: defaultColorPaletteId ?? '',
@@ -919,7 +924,8 @@ export class Processor {
                     ctx.config.chartsEngineConfig.flags?.chartComments &&
                     (type === CONFIG_TYPE.GRAPH_NODE ||
                         type === CONFIG_TYPE.GRAPH_WIZARD_NODE ||
-                        type === CONFIG_TYPE.GRAPH_QL_NODE)
+                        type === CONFIG_TYPE.GRAPH_QL_NODE ||
+                        type === WizardType.GravityChartsWizardNode)
                 ) {
                     try {
                         const chartName =
@@ -929,16 +935,29 @@ export class Processor {
 
                         hrStart = process.hrtime();
 
-                        result.comments = await CommentsFetcher.prepareComments(
-                            {
-                                chartName,
-                                config: resultConfig.comments,
-                                data: result.data as CommentsFetcherPrepareCommentsParams['data'],
-                                params,
-                            },
-                            subrequestHeaders,
-                            ctx,
-                        );
+                        if (type === WizardType.GravityChartsWizardNode) {
+                            result.comments = await CommentsFetcher.prepareGravityChartsComments(
+                                {
+                                    chartName,
+                                    config: resultConfig.comments,
+                                    data: result.data as ChartData,
+                                    params,
+                                },
+                                subrequestHeaders,
+                                ctx,
+                            );
+                        } else {
+                            result.comments = await CommentsFetcher.prepareComments(
+                                {
+                                    chartName,
+                                    config: resultConfig.comments,
+                                    data: result.data as CommentsFetcherPrepareCommentsParams['data'],
+                                    params,
+                                },
+                                subrequestHeaders,
+                                ctx,
+                            );
+                        }
 
                         ctx.log('EditorEngine::Comments', {duration: getDuration(hrStart)});
                     } catch (error) {

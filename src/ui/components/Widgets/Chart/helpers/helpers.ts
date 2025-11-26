@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import type {ConfigItemData} from '@gravity-ui/dashkit';
 import type {AxiosResponse} from 'axios';
 import type {History} from 'history';
@@ -14,6 +15,7 @@ import {isEnabledFeature} from 'ui/utils/isEnabledFeature';
 import type {ChartsStats} from '../../../../../shared/types/charts';
 import type {ChartKitLoadSuccess} from '../../../../libs/DatalensChartkit/components/ChartKitBase/ChartKitBase';
 import type {ChartKitWrapperOnLoadProps} from '../../../../libs/DatalensChartkit/components/ChartKitBase/types';
+import {convertChartToTable} from '../../../../libs/DatalensChartkit/helpers/convert-data-to-table';
 import type {
     ChartsData,
     ResponseError,
@@ -39,7 +41,10 @@ import type {
     ChartContentProps,
     ChartWithProviderProps,
     ResolveWidgetControlDataRefArgs,
+    WidgetDataRef,
 } from '../types';
+
+import {getMapSimpleConfig} from './yandex-map';
 
 export const COMPONENT_CLASSNAME = 'dl-widget';
 
@@ -109,6 +114,55 @@ const getUniqDatasetsFields = (datasets?: Array<DatasetsData>) => {
     return datasets;
 };
 
+export const getChartSimpleLoadedData = ({
+    widget,
+    loadedData,
+}: {
+    widget?: WidgetDataRef['current'];
+    loadedData: LoadedWidgetData<unknown>;
+}) => {
+    const convertedToTableData = convertChartToTable({
+        widget,
+        widgetData: loadedData,
+    });
+
+    let queries;
+
+    if (loadedData && 'sources' in loadedData) {
+        const sources = loadedData.sources ?? {};
+        const sourceValues = Object.values(sources);
+
+        queries = sourceValues.map((source) => {
+            return 'info' in source ? source?.info : '';
+        });
+    }
+
+    let data: object | null = convertedToTableData;
+    if (isEmpty(convertedToTableData)) {
+        switch (loadedData?.type) {
+            case 'metric':
+            case 'metric2':
+            case 'markup':
+            case 'markdown': {
+                data = loadedData?.data;
+                break;
+            }
+            case 'ymap': {
+                data = getMapSimpleConfig({
+                    widgetData: loadedData as LoadedWidgetData<unknown>,
+                });
+                break;
+            }
+            default: {
+                data = loadedData;
+                break;
+            }
+        }
+    }
+
+    return {queries, data};
+};
+
 /**
  * For new (by flag relations) for charts only
  * @param tabs
@@ -122,12 +176,14 @@ export const getWidgetMeta = ({
     loadData,
     savedData,
     error,
+    widgetDataRef,
 }: {
     tabs: Array<CurrentTab>;
     id: string;
     loadData: LoadedWidgetData<ChartsData>;
     savedData: LoadedWidgetData<ChartsData>;
     error: CombinedError | null;
+    widgetDataRef?: WidgetDataRef;
 }) => {
     return tabs.map((tabWidget) => {
         let loadedData: WidgetLoadedData = null;
@@ -170,7 +226,12 @@ export const getWidgetMeta = ({
             isWizard: Boolean(loadedData?.isNewWizard || loadedData?.isOldWizard),
             isEditor: Boolean(loadedData?.isEditor),
             isQL: Boolean(loadedData?.isQL),
-            getLoadedData: () => loadedData,
+            getSimpleLoadedData: () => {
+                return getChartSimpleLoadedData({
+                    widget: widgetDataRef?.current,
+                    loadedData: loadedData as LoadedWidgetData<unknown>,
+                });
+            },
         };
 
         return metaInfo;
@@ -222,7 +283,7 @@ export const getWidgetSelectorMeta = ({
             type: (loadedData?.type as DashTabItemType) || null,
             visualizationType: null,
             loadError: loadedWithError,
-            getLoadedData: () => loadedData,
+            getSimpleLoadedData: () => loadedData,
         };
 
     return metaInfo;

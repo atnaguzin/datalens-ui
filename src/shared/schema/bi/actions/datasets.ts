@@ -1,9 +1,5 @@
-import {
-    TIMEOUT_60_SEC,
-    TIMEOUT_95_SEC,
-    US_MASTER_TOKEN_HEADER,
-    WORKBOOK_ID_HEADER,
-} from '../../../constants';
+import {registry} from '../../../../server/registry';
+import {TIMEOUT_60_SEC, TIMEOUT_95_SEC, WORKBOOK_ID_HEADER} from '../../../constants';
 import {createAction, createTypedAction} from '../../gateway-utils';
 import {filterUrlFragment} from '../../utils';
 import {
@@ -21,6 +17,8 @@ import {
     getDatasetByVersionResultSchema,
     updateDatasetArgsSchema,
     updateDatasetResultSchema,
+    validateDatasetArgsSchema,
+    validateDatasetResultSchema,
 } from '../schemas';
 import type {
     CheckConnectionsForPublicationArgs,
@@ -29,10 +27,15 @@ import type {
     CheckDatasetsForPublicationResponse,
     CopyDatasetArgs,
     CopyDatasetResponse,
+    CreateDatasetArgs,
+    CreateDatasetResponse,
     ExportDatasetArgs,
     ExportDatasetResponse,
     GetDataSetFieldsByIdArgs,
     GetDataSetFieldsByIdResponse,
+    GetDatasetByVersionArgs,
+    GetDatasetByVersionResponse,
+    GetDbNamesResponse,
     GetDistinctsApiV2Args,
     GetDistinctsApiV2Response,
     GetDistinctsApiV2TransformedResponse,
@@ -40,9 +43,12 @@ import type {
     GetPreviewArgs,
     GetPreviewResponse,
     GetSourceArgs,
+    GetSourceListingOptionsResponse,
     GetSourceResponse,
     ImportDatasetArgs,
     ImportDatasetResponse,
+    UpdateDatasetArgs,
+    UpdateDatasetResponse,
     ValidateDatasetArgs,
     ValidateDatasetFormulaArgs,
     ValidateDatasetFormulaResponse,
@@ -58,21 +64,20 @@ export const actions = {
         method: 'GET',
         path: ({connectionId}) =>
             `${API_V1}/connections/${filterUrlFragment(connectionId)}/info/sources`,
-        params: ({limit, workbookId}, headers) => ({
-            query: {limit},
+        params: ({limit, offset, search_text, db_name, workbookId}, headers) => ({
+            query: {limit, offset, db_name, search_text},
             headers: {...(workbookId ? {[WORKBOOK_ID_HEADER]: workbookId} : {}), ...headers},
         }),
         timeout: TIMEOUT_60_SEC,
     }),
-
-    getDatasetByVersion: createTypedAction(
+    getDatasetByVersion: createTypedAction<GetDatasetByVersionResponse, GetDatasetByVersionArgs>(
         {
             paramsSchema: getDatasetByVersionArgsSchema,
             resultSchema: getDatasetByVersionResultSchema,
         },
         {
             method: 'GET',
-            path: ({datasetId, version}) =>
+            path: ({datasetId, version = 'draft'}) =>
                 `${API_V1}/datasets/${filterUrlFragment(datasetId)}/versions/${filterUrlFragment(
                     version,
                 )}`,
@@ -82,7 +87,21 @@ export const actions = {
             }),
         },
     ),
-
+    getDbNames: createAction<GetDbNamesResponse, Pick<GetSourceArgs, 'connectionId'>>({
+        method: 'GET',
+        path: ({connectionId}) =>
+            `${API_V1}/connections/${filterUrlFragment(connectionId)}/db_names`,
+        params: (_, headers) => ({headers}),
+    }),
+    getSourceListingOptions: createAction<
+        GetSourceListingOptionsResponse,
+        Pick<GetSourceArgs, 'connectionId'>
+    >({
+        method: 'GET',
+        path: ({connectionId}) =>
+            `${API_V1}/connections/${filterUrlFragment(connectionId)}/info/source_listing_options`,
+        params: (_, headers) => ({headers}),
+    }),
     getFieldTypes: createAction<GetFieldTypesResponse>({
         method: 'GET',
         path: () => `${API_V1}/info/field_types`,
@@ -142,7 +161,7 @@ export const actions = {
             headers: {...(workbookId ? {[WORKBOOK_ID_HEADER]: workbookId} : {}), ...headers},
         }),
     }),
-    createDataset: createTypedAction(
+    createDataset: createTypedAction<CreateDatasetResponse, CreateDatasetArgs>(
         {
             paramsSchema: createDatasetArgsSchema,
             resultSchema: createDatasetResultSchema,
@@ -156,39 +175,47 @@ export const actions = {
             },
         },
     ),
-    validateDataset: createAction<ValidateDatasetResponse, ValidateDatasetArgs>({
-        method: 'POST',
-        path: ({datasetId, version}) =>
-            datasetId
-                ? `${API_V1}/datasets/${filterUrlFragment(datasetId)}/versions/${filterUrlFragment(
-                      version,
-                  )}/validators/schema`
-                : `${API_V1}/datasets/validators/dataset`,
-        params: ({dataset, workbookId, updates}, headers, {ctx}) => {
-            const resultDataset = prepareDatasetProperty(ctx, dataset);
-            return {
-                body: {dataset: resultDataset, updates},
-                headers: {...(workbookId ? {[WORKBOOK_ID_HEADER]: workbookId} : {}), ...headers},
-            };
+    validateDataset: createTypedAction<ValidateDatasetResponse, ValidateDatasetArgs>(
+        {
+            paramsSchema: validateDatasetArgsSchema,
+            resultSchema: validateDatasetResultSchema,
         },
-        transformResponseError: transformValidateDatasetResponseError,
-        timeout: TIMEOUT_95_SEC,
-    }),
-
-    updateDataset: createTypedAction(
+        {
+            method: 'POST',
+            path: ({datasetId, version = 'draft'}) =>
+                datasetId
+                    ? `${API_V1}/datasets/${filterUrlFragment(datasetId)}/versions/${filterUrlFragment(
+                          version,
+                      )}/validators/schema`
+                    : `${API_V1}/datasets/validators/dataset`,
+            params: ({data: {dataset, ...restData}, workbookId}, headers, {ctx}) => {
+                const resultDataset = prepareDatasetProperty(ctx, dataset);
+                return {
+                    body: {...restData, dataset: resultDataset},
+                    headers: {
+                        ...(workbookId ? {[WORKBOOK_ID_HEADER]: workbookId} : {}),
+                        ...headers,
+                    },
+                };
+            },
+            transformResponseError: transformValidateDatasetResponseError,
+            timeout: TIMEOUT_95_SEC,
+        },
+    ),
+    updateDataset: createTypedAction<UpdateDatasetResponse, UpdateDatasetArgs>(
         {
             paramsSchema: updateDatasetArgsSchema,
             resultSchema: updateDatasetResultSchema,
         },
         {
             method: 'PUT',
-            path: ({datasetId, version}) =>
+            path: ({datasetId, version = 'draft'}) =>
                 `${API_V1}/datasets/${filterUrlFragment(datasetId)}/versions/${filterUrlFragment(
                     version,
                 )}`,
-            params: ({dataset, multisource}, headers, {ctx}) => {
+            params: ({data: {dataset, ...restData}}, headers, {ctx}) => {
                 const resultDataset = prepareDatasetProperty(ctx, dataset);
-                return {body: {dataset: resultDataset, multisource}, headers};
+                return {body: {...restData, dataset: resultDataset}, headers};
             },
         },
     ),
@@ -270,7 +297,6 @@ export const actions = {
         transformResponseData: transformApiV2DistinctsResponse,
         timeout: TIMEOUT_95_SEC,
     }),
-
     deleteDataset: createTypedAction(
         {
             paramsSchema: deleteDatasetArgsSchema,
@@ -282,29 +308,29 @@ export const actions = {
             params: (_, headers) => ({headers}),
         },
     ),
-
     _proxyExportDataset: createAction<ExportDatasetResponse, ExportDatasetArgs>({
         method: 'POST',
         path: ({datasetId}) => `${API_V1}/datasets/export/${datasetId}`,
-        params: ({usMasterToken, workbookId, idMapping}, headers) => ({
+        params: ({workbookId, idMapping}, headers) => ({
             headers: {
                 ...(workbookId ? {[WORKBOOK_ID_HEADER]: workbookId} : {}),
                 ...headers,
-                [US_MASTER_TOKEN_HEADER]: usMasterToken,
             },
             body: {
                 id_mapping: idMapping,
             },
         }),
+        getAuthHeaders: (params) => {
+            return registry.common.auth.getAll().getAuthHeadersBIPrivate(params);
+        },
     }),
     _proxyImportDataset: createAction<ImportDatasetResponse, ImportDatasetArgs>({
         method: 'POST',
         path: () => `${API_V1}/datasets/import`,
-        params: ({usMasterToken, workbookId, idMapping, dataset}, headers) => ({
+        params: ({workbookId, idMapping, dataset}, headers) => ({
             headers: {
                 ...(workbookId ? {[WORKBOOK_ID_HEADER]: workbookId} : {}),
                 ...headers,
-                [US_MASTER_TOKEN_HEADER]: usMasterToken,
             },
             body: {
                 data: {
@@ -314,5 +340,8 @@ export const actions = {
                 id_mapping: idMapping,
             },
         }),
+        getAuthHeaders: (params) => {
+            return registry.common.auth.getAll().getAuthHeadersBIPrivate(params);
+        },
     }),
 };

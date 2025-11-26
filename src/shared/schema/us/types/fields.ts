@@ -1,3 +1,4 @@
+import type {CollectionItemEntities} from '../../../constants';
 import type {EntryAnnotation, WorkbookId} from '../../../types';
 
 export type EntryFieldData<T = Record<string, unknown>> = null | T;
@@ -27,6 +28,7 @@ export interface EntryFields {
     updatedBy: string;
     unversionedData?: unknown;
     workbookId: WorkbookId;
+    collectionId?: string;
     annotation?: EntryAnnotation | null;
 }
 
@@ -65,6 +67,30 @@ export interface EntryNavigationFields {
     workbookTitle?: string | null;
 }
 
+export interface SharedEntryPermissions {
+    delete: true;
+    move: true;
+    update: true;
+}
+
+export interface SharedEntryFields {
+    collectionId: string;
+    updatedAt: string;
+    workbookId: string;
+    projectId: string;
+    scope: string;
+    type: string;
+    key: string;
+    entryId: string;
+    entity: typeof CollectionItemEntities.ENTRY;
+    displayKey: string;
+    title: string;
+}
+
+export interface SharedEntryFieldsWithPermissions extends SharedEntryFields {
+    permissions: SharedEntryPermissions;
+}
+
 // corresponds to RETURN_FAVORITES_COLUMNS from US
 export interface EntryFavoriteFields {
     entryId: string;
@@ -88,6 +114,7 @@ export interface EntryRelationFields {
     type: string;
     key: string;
     meta: EntryFieldMeta;
+    links: EntryFieldLinks;
     depth: number;
     tenantId: string;
     public: boolean;
@@ -95,12 +122,14 @@ export interface EntryRelationFields {
     isLocked: boolean;
 }
 
+export interface TenantSettings {
+    defaultColorPaletteId?: string;
+}
+
 export interface TenantFields {
     tenantId: string;
     createdAt: string;
     enabled: boolean;
     deleting: boolean;
-    settings: {
-        defaultColorPaletteId?: string;
-    };
+    settings: TenantSettings;
 }

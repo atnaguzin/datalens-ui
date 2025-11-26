@@ -1,13 +1,5 @@
-import type {Field, TableBarsSettings} from 'shared';
-import {
-    BarsAlignValues,
-    BarsColorType,
-    PlaceholderId,
-    WizardVisualizationId,
-    isMeasureType,
-    isNumberField,
-} from 'shared';
-import {getTenantDefaultColorPaletteId} from 'ui/constants/common';
+import type {Field} from 'shared';
+import {PlaceholderId, WizardVisualizationId, isMeasureType, isNumberField} from 'shared';
 
 const PLACEHOLDERS_WITH_BARS_SETTINGS: Record<string, Record<string, boolean>> = {
     [WizardVisualizationId.FlatTable]: {
@@ -17,24 +9,6 @@ const PLACEHOLDERS_WITH_BARS_SETTINGS: Record<string, Record<string, boolean>> =
         [PlaceholderId.Measures]: true,
     },
 };
-
-export const getDefaultBarsSettings = (): TableBarsSettings => ({
-    enabled: false,
-    colorSettings: {
-        colorType: BarsColorType.TwoColor,
-        settings: {
-            palette: getTenantDefaultColorPaletteId(),
-            positiveColorIndex: 2,
-            negativeColorIndex: 1,
-        },
-    },
-    showLabels: true,
-    align: BarsAlignValues.Default,
-    scale: {
-        mode: 'auto',
-    },
-    showBarsInTotals: false,
-});
 
 export const showBarsInDialogField = (
     visualizationId: string | undefined,

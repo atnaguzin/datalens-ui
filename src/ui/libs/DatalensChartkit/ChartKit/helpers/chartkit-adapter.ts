@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import {isEnabledFeature} from 'ui/utils/isEnabledFeature';
 
-import {Feature} from '../../../../../shared';
+import {Feature, isMarkupItem} from '../../../../../shared';
 import {DL} from '../../../../constants/common';
 import type {GraphWidget, LoadedWidgetData} from '../../types';
 import type {ChartKitAdapterProps} from '../types';
@@ -42,7 +42,11 @@ export const getChartkitType = (data?: LoadedWidgetData): ChartKitType | undefin
         // - then, simple 'metric2' was created specifically for Wizard
         // - 'metric2' go to opensource with more common name for such charts in the BI community - 'indicator'
         case 'metric2': {
-            chartkitType = 'indicator';
+            if (isMarkupItem(get(data?.data, 'value'))) {
+                chartkitType = 'markup';
+            } else {
+                chartkitType = 'indicator';
+            }
 
             break;
         }
@@ -109,10 +113,12 @@ export const getOpensourceChartKitData = <T extends ChartKitType>({
     type,
     loadedData,
     onChange,
+    runActivity,
 }: {
     type: T;
     loadedData: ChartKitAdapterProps['loadedData'];
     onChange?: ChartKitAdapterProps['onChange'];
+    runActivity?: ChartKitAdapterProps['runActivity'];
 }) => {
     switch (type) {
         case 'indicator': {
@@ -208,6 +214,7 @@ export const getOpensourceChartKitData = <T extends ChartKitType>({
             return getGravityChartsChartKitData({
                 loadedData: data,
                 onChange,
+                runActivity,
             });
         }
         default: {

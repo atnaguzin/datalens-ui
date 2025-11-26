@@ -111,57 +111,31 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
     const {DialogRelatedEntitiesRadioHint} = registry.common.components.getAll();
     const {renderDialogRelatedEntitiesAlertHint} = registry.common.functions.getAll();
 
-    let selectedRelationCount = 0;
-    for (const updatedEntry in updatedEntities) {
-        if (updatedEntities[updatedEntry]) {
-            selectedRelationCount++;
-        }
-    }
-
-    useEffect(()=>{
-        const _updatedEntities: Record<string, boolean> = {};
-        for (const key in relations) {
-            for (const relation in relations[key]) {
-                if (updatedEntities[relations[key][relation].entryId] === undefined) {
-                    _updatedEntities[relations[key][relation].entryId] = false;
-                }
-            }
-        }
-        setUpdatedEntities({...updatedEntities, ..._updatedEntities});
-    }, [relations]);
-
-    const loadAccesses = async () => {
-        const data = await Utils.getAccesses({id: entry.entryId});
-        setAccesses(data);
-    }
-    
     const fetchRelatedEntries = React.useCallback(() => {
         setIsLoading(true);
         setIsError(false);
         cancelConcurrentRequest();
-        loadAccesses().finally(()=>{
-            getSdk()
-                .sdk.mix.getEntryRelations(
-                    {
-                        entryId: entry.entryId,
-                        workbookId: entry.workbookId,
-                        direction: currentDirection,
-                    },
-                    {concurrentId: CONCURRENT_ID},
-                )
-                .then((response) => {
-                    setRelationsCount(response.length);
-                    setRelations(groupEntitiesByScope(response));
-                    setIsLoading(false);
-                })
-                .catch((error) => {
-                    if (error.isCancelled) {
-                        return;
-                    }
-                    setIsError(true);
-                    setIsLoading(false);
-                });
-        })
+        getSdk()
+            .sdk.mix.getEntryRelations(
+                {
+                    entryId: entry.entryId,
+                    workbookId: entry.workbookId,
+                    direction: currentDirection,
+                },
+                {concurrentId: CONCURRENT_ID},
+            )
+            .then((response) => {
+                setRelationsCount(response.length);
+                setRelations(groupEntitiesByScope(response));
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                if (error.isCancelled) {
+                    return;
+                }
+                setIsError(true);
+                setIsLoading(false);
+            });
     }, [entry, currentDirection]);
 
     React.useEffect(() => {

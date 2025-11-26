@@ -3,7 +3,8 @@ import type {ChartData, ChartTitle} from '@gravity-ui/chartkit/gravity-charts';
 import {PlaceholderId, WizardVisualizationId, isDateField} from '../../../../../../../shared';
 import type {
     ServerCommonSharedExtraSettings,
-    ServerVisualization,
+    ServerPlaceholder,
+    ServerPlaceholderSettings,
 } from '../../../../../../../shared';
 import {getAxisTitle, getTickPixelInterval, isGridEnabled} from '../../utils/axis-helpers';
 
@@ -17,9 +18,41 @@ export function getChartTitle(settings?: ServerCommonSharedExtraSettings): Chart
     return undefined;
 }
 
+export function getAxisLabelsRotationAngle(placeholderSettings?: ServerPlaceholderSettings) {
+    switch (placeholderSettings?.labelsView) {
+        case 'horizontal': {
+            return 0;
+        }
+        case 'vertical': {
+            return 90;
+        }
+        case 'angle': {
+            return 45;
+        }
+    }
+
+    return undefined;
+}
+
+function getAxisMinMax(
+    placeholderSettings?: ServerPlaceholderSettings,
+): [number | undefined, number | undefined] {
+    if (
+        placeholderSettings?.scale !== 'manual' ||
+        !Array.isArray(placeholderSettings?.scaleValue)
+    ) {
+        return [undefined, undefined];
+    }
+
+    const min = Number(placeholderSettings.scaleValue[0]);
+    const max = Number(placeholderSettings.scaleValue[1]);
+
+    return [Number.isNaN(min) ? undefined : min, Number.isNaN(max) ? undefined : max];
+}
+
 export function getBaseChartConfig(args: {
     extraSettings?: ServerCommonSharedExtraSettings;
-    visualization: ServerVisualization;
+    visualization: {id: string; placeholders: ServerPlaceholder[]};
 }) {
     const {extraSettings, visualization} = args;
     const isLegendEnabled = extraSettings?.legendMode !== 'hide';
@@ -32,9 +65,14 @@ export function getBaseChartConfig(args: {
     const yPlaceholderSettings = yPlaceholder?.settings || {};
     const yItem = yPlaceholder?.items[0];
 
-    const chartWidgetData: Partial<ChartData> = {
+    let chartWidgetData: Partial<ChartData> = {
         title: getChartTitle(extraSettings),
-        tooltip: {enabled: extraSettings?.tooltip !== 'hide'},
+        tooltip: {
+            enabled: extraSettings?.tooltip !== 'hide',
+            totals: {
+                enabled: extraSettings?.tooltipSum !== 'off',
+            },
+        },
         legend: {enabled: isLegendEnabled},
         series: {
             data: [],
@@ -60,6 +98,14 @@ export function getBaseChartConfig(args: {
                 right: 10,
                 bottom: 15,
             },
+            zoom: {
+                enabled: true,
+                resetButton: {
+                    align: 'top-right',
+                    offset: {x: 2, y: 30},
+                    relativeTo: 'plot-box',
+                },
+            },
         },
     };
 
@@ -74,16 +120,22 @@ export function getBaseChartConfig(args: {
     ];
 
     const visualizationWithYMainAxis = [
+        WizardVisualizationId.Bar,
+        WizardVisualizationId.Bar100p,
         WizardVisualizationId.BarYD3,
         WizardVisualizationId.BarY100pD3,
     ];
 
     if (!visualizationWithoutAxis.includes(visualizationId)) {
-        Object.assign(chartWidgetData, {
+        const [xMin, xMax] = getAxisMinMax(xPlaceholderSettings);
+        const [yMin, yMax] = getAxisMinMax(yPlaceholderSettings);
+        chartWidgetData = {
+            ...chartWidgetData,
             xAxis: {
                 visible: xPlaceholderSettings?.axisVisibility !== 'hide',
                 labels: {
                     enabled: xPlaceholderSettings?.hideLabels !== 'yes',
+                    rotation: getAxisLabelsRotationAngle(xPlaceholderSettings),
                 },
                 title: {
                     text: getAxisTitle(xPlaceholderSettings, xItem) || undefined,
@@ -94,6 +146,9 @@ export function getBaseChartConfig(args: {
                 ticks: {
                     pixelInterval: getTickPixelInterval(xPlaceholderSettings) || 120,
                 },
+                lineColor: 'var(--g-color-line-generic)',
+                min: xMin,
+                max: xMax,
             },
             yAxis: [
                 {
@@ -102,6 +157,7 @@ export function getBaseChartConfig(args: {
                     visible: yPlaceholderSettings?.axisVisibility !== 'hide',
                     labels: {
                         enabled: Boolean(yItem) && yPlaceholder?.settings?.hideLabels !== 'yes',
+                        rotation: getAxisLabelsRotationAngle(yPlaceholder?.settings),
                     },
                     title: {
                         text: getAxisTitle(yPlaceholderSettings, yItem) || undefined,
@@ -112,9 +168,12 @@ export function getBaseChartConfig(args: {
                     ticks: {
                         pixelInterval: getTickPixelInterval(yPlaceholderSettings) || 72,
                     },
+                    lineColor: 'var(--g-color-line-generic)',
+                    min: yMin,
+                    max: yMax,
                 },
             ],
-        });
+        };
 
         if (visualizationWithYMainAxis.includes(visualizationId)) {
             chartWidgetData.xAxis = {...chartWidgetData.xAxis, lineColor: 'transparent'};

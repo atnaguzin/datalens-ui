@@ -12,9 +12,12 @@ import type {Dispatch} from 'redux';
 import {bindActionCreators} from 'redux';
 import {ActionPanelQA, EntryScope} from 'shared';
 import type {DatalensGlobalState, EntryDialogues} from 'ui';
+import type {FilterEntryContextMenuItems} from 'ui/components/EntryContextMenu';
 import {CounterName, GoalId, reachMetricaGoal} from 'ui/libs/metrica';
 import {registry} from 'ui/registry';
 import type {BreadcrumbsItem} from 'ui/registry/units/common/types/components/EntryBreadcrumbs';
+import {getCollectionBreadcrumbs} from 'ui/store/actions/collectionsStructure';
+import {selectGetCollectionBreadcrumbs} from 'ui/store/selectors/collectionsStructure';
 import {addWorkbookInfo, resetWorkbookPermissions} from 'units/workbooks/store/actions';
 import {selectWorkbookBreadcrumbs, selectWorkbookName} from 'units/workbooks/store/selectors';
 
@@ -46,6 +49,7 @@ type OwnProps = {
     entry?: GetEntryResponse;
     onCloseNavigation?: () => void;
     enablePublish?: boolean;
+    filterEntryContextMenuItems?: FilterEntryContextMenuItems;
 };
 
 type Props = OwnProps & DispatchProps & StateProps & RouteComponentProps;
@@ -101,15 +105,21 @@ class EntryPanel extends React.Component<Props, State> {
 
     componentDidMount() {
         const workbookId = this.state.entry?.workbookId;
+        const collectionId = this.state.entry?.collectionId;
 
         if (workbookId) {
             this.props.actions.addWorkbookInfo(workbookId, true);
+        }
+        if (collectionId) {
+            this.props.actions.getCollectionBreadcrumbs({collectionId});
         }
     }
 
     componentDidUpdate(prevProps: Props) {
         const workbookId = this.props.entry?.workbookId;
+        const collectionId = this.props.entry?.collectionId;
         const prevWorkbookId = prevProps.entry?.workbookId;
+        const prevCollectionId = prevProps.entry?.collectionId;
 
         if (prevWorkbookId !== workbookId && workbookId) {
             this.props.actions.addWorkbookInfo(workbookId, true);
@@ -118,10 +128,14 @@ class EntryPanel extends React.Component<Props, State> {
         if (prevWorkbookId && !workbookId) {
             this.props.actions.resetWorkbookPermissions();
         }
+
+        if (prevCollectionId !== collectionId && collectionId) {
+            this.props.actions.getCollectionBreadcrumbs({collectionId});
+        }
     }
 
     render() {
-        const {children, workbookName, workbookBreadcrumbs} = this.props;
+        const {children, workbookName, workbookBreadcrumbs, collectionBreadcrumbs} = this.props;
         const {EntryBreadcrumbs} = registry.common.components.getAll();
 
         return (
@@ -131,7 +145,7 @@ class EntryPanel extends React.Component<Props, State> {
                     renderRootContent={this.renderRootContent}
                     entry={this.state.entry}
                     workbookName={workbookName}
-                    workbookBreadcrumbs={workbookBreadcrumbs}
+                    entityBreadcrumbs={workbookBreadcrumbs ?? collectionBreadcrumbs.data}
                     endContent={
                         <React.Fragment>
                             {this.renderControls()}
@@ -187,6 +201,7 @@ class EntryPanel extends React.Component<Props, State> {
                         entry={entry}
                         additionalItems={additionalItems}
                         showSpecificItems={true}
+                        filterEntryContextMenuItems={this.props.filterEntryContextMenuItems}
                     />
                 )}
             </div>
@@ -328,6 +343,7 @@ const mapStateToProps = (state: DatalensGlobalState, ownProps: OwnProps) => {
     return {
         workbookName: selectWorkbookName(state, workbookId),
         workbookBreadcrumbs: selectWorkbookBreadcrumbs(state),
+        collectionBreadcrumbs: selectGetCollectionBreadcrumbs(state),
     };
 };
 
@@ -335,6 +351,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => {
     return {
         actions: bindActionCreators(
             {
+                getCollectionBreadcrumbs,
                 addWorkbookInfo,
                 resetWorkbookPermissions,
             },

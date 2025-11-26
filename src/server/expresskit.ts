@@ -3,7 +3,7 @@ import {ExpressKit} from '@gravity-ui/expresskit';
 import type {NodeKit} from '@gravity-ui/nodekit';
 
 import type {ExtendedAppRouteDescription} from './types/controllers';
-import { US } from './components/sdk';
+import US from './components/sdk/us';
 
 const { auth } = require('express-openid-connect');
 
