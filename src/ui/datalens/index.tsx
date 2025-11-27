@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import {Route, Switch, Redirect, useLocation} from 'react-router-dom';
-import {useSelector} from 'react-redux';
+// import {useSelector} from 'react-redux';
 import coreReducers from 'store/reducers';
 import {getIsAsideHeaderEnabled} from 'components/AsideHeaderAdapter';
 import LocationChange from '../components/LocationChange/LocationChange';
-import {selectIsLanding} from 'store/selectors/landing';
+// import {selectIsLanding} from 'store/selectors/landing';
 import FallbackPage from './pages/FallbackPage/FallbackPage';
 import DashAndWizardQLPages, {
     dashAndWizardQLRoutes,
@@ -87,16 +87,16 @@ const DatalensPageView = (props: any) => {
     var superUser = props.superUser;
     var setSuperUser = props.setSuperUser;
 
-    const isLanding = useSelector(selectIsLanding);
-    const location = useLocation()
+    // const isLanding = useSelector(selectIsLanding);
+    const location = useLocation();
 
-    if (isLanding) {
-        return (
-            <React.Suspense fallback={<FallbackPage />}>
-                <LandingPage />
-            </React.Suspense>
-        );
-    }
+    // if (isLanding) {
+    //     return (
+    //         <React.Suspense fallback={<FallbackPage />}>
+    //             <LandingPage />
+    //         </React.Suspense>
+    //     );
+    // }
 
     console.log("superUser.isMaster", superUser.isMaster)
     if (DL.IS_AUTH_PAGE) {
@@ -167,10 +167,6 @@ const DatalensPageView = (props: any) => {
                     <Route path="/">
                         <Redirect to={`/collections${location.search}`} />
                     </Route>
-
-                    <Route path="/">
-                        <Redirect to={`/collections${location.search}`} />
-                    </Route>  
 
                     {/* comment till we have main page */}
                     {/*<Route path="/" component={MainPage} />*/}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 
 import type {DropdownMenuItem} from '@gravity-ui/uikit';
 import {
@@ -107,7 +107,7 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
     );
     const [relationsCount, setRelationsCount] = React.useState<null | number>(null);
     const [updatedEntities, setUpdatedEntities] = React.useState<Record<string, boolean>>({});
-    const [accesses] = React.useState<any>([]);
+    const [accesses, setAccesses] = React.useState<any>([]);
     const {DialogRelatedEntitiesRadioHint} = registry.common.components.getAll();
     const {renderDialogRelatedEntitiesAlertHint} = registry.common.functions.getAll();
 
@@ -118,31 +118,50 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
         }
     }
 
+    useEffect(() => {
+        const _updatedEntities: Record<string, boolean> = {};
+        for (const key in relations) {
+            for (const relation in relations[key]) {
+                if (updatedEntities[relations[key][relation].entryId] === undefined) {
+                    _updatedEntities[relations[key][relation].entryId] = false;
+                }
+            }
+        }
+        setUpdatedEntities({...updatedEntities, ..._updatedEntities});
+    }, [relations]);
+
+    const loadAccesses = async () => {
+        const data = await Utils.getAccesses({id: entry.entryId});
+        setAccesses(data);
+    };
+
     const fetchRelatedEntries = React.useCallback(() => {
         setIsLoading(true);
         setIsError(false);
         cancelConcurrentRequest();
-        getSdk()
-            .sdk.mix.getEntryRelations(
-                {
-                    entryId: entry.entryId,
-                    workbookId: entry.workbookId,
-                    direction: currentDirection,
-                },
-                {concurrentId: CONCURRENT_ID},
-            )
-            .then((response) => {
-                setRelationsCount(response.length);
-                setRelations(groupEntitiesByScope(response));
-                setIsLoading(false);
-            })
-            .catch((error) => {
-                if (error.isCancelled) {
-                    return;
-                }
-                setIsError(true);
-                setIsLoading(false);
-            });
+        loadAccesses().finally(() => {
+            getSdk()
+                .sdk.mix.getEntryRelations(
+                    {
+                        entryId: entry.entryId,
+                        workbookId: entry.workbookId,
+                        direction: currentDirection,
+                    },
+                    {concurrentId: CONCURRENT_ID},
+                )
+                .then((response) => {
+                    setRelationsCount(response.length);
+                    setRelations(groupEntitiesByScope(response));
+                    setIsLoading(false);
+                })
+                .catch((error) => {
+                    if (error.isCancelled) {
+                        return;
+                    }
+                    setIsError(true);
+                    setIsLoading(false);
+                });
+        });
     }, [entry, currentDirection]);
 
     React.useEffect(() => {
@@ -169,7 +188,7 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
     };
     
     const handleApply = () => {
-        const accessesObj: any = {};
+        const accessesObj = {};
         accesses.forEach((access: any) => {
             accessesObj[access.role_id] = accessesObj[access.role_id] || {role_id: access.role_id};
             if (access.add) accessesObj[access.role_id].add = true;
@@ -183,7 +202,7 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
         Utils.getRoles({}).then((roles)=>{
             for (const role in roles) {
                 const roleItem = roles[role];
-                if (fullAccesses.findIndex((item:any)=>roleItem.role_id == item.role_id) < 0) {
+                if (fullAccesses.findIndex(item=>roleItem.role_id == item.role_id) < 0) {
                     fullAccesses.push({
                         role_id: roleItem.role_id, 
                         add: false,
