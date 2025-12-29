@@ -103,7 +103,18 @@ export const CollectionDialog = React.memo<Props>(
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_project')}</div>
                         
-                        <Select defaultValue={[(values.project || [''])[0] || projectDefault]} options={projects} onUpdate={handleChange}/>
+                        <Select 
+                            defaultValue={[(values.project || [''])[0] || projectDefault]} 
+                            options={projects} 
+                            onUpdate={
+                                (value: any) => handleChange({
+                                    target: {
+                                        name: "project",
+                                        value: value[0]
+                                    }
+                                })
+                            } 
+                        />
                     </div>
                     <div className={b('field')}>
                         <div className={b('title')}>{i18n('label_description')}</div>
