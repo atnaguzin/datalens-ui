@@ -63,7 +63,7 @@ const UsersPage = React.lazy(
 const ServiceSettings = React.lazy(() => import('./pages/ServiceSettingsPage/ServiceSettingsPage'));
 //const UserProfile = React.lazy(() => import('./pages/OwnUserProfilePage/OwnUserProfilePage'));
 
-const LandingPage = React.lazy(() => import('./pages/LandingPage/LandingPage'));
+//const LandingPage = React.lazy(() => import('./pages/LandingPage/LandingPage'));
 const AuthPage = React.lazy(
     () => import(/* webpackChunkName: "auth-page" */ './pages/AuthPage/AuthPage'),
 );

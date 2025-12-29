@@ -188,7 +188,7 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
     };
     
     const handleApply = () => {
-        const accessesObj = {};
+        const accessesObj:any = {};
         accesses.forEach((access: any) => {
             accessesObj[access.role_id] = accessesObj[access.role_id] || {role_id: access.role_id};
             if (access.add) accessesObj[access.role_id].add = true;
@@ -196,13 +196,13 @@ export const DialogRelatedEntities = ({onClose, visible, entry}: DialogRelatedEn
             if (access.select) accessesObj[access.role_id].select = true;
             if (access.update) accessesObj[access.role_id].update = true;
         });
-        const fullAccesses = Object.values(accessesObj);
+        const fullAccesses:any = Object.values(accessesObj);
 
         setIsLoading(true);
         Utils.getRoles({}).then((roles)=>{
             for (const role in roles) {
                 const roleItem = roles[role];
-                if (fullAccesses.findIndex(item=>roleItem.role_id == item.role_id) < 0) {
+                if (fullAccesses.findIndex((item:any)=> { return roleItem.role_id == item.role_id}) < 0) {
                     fullAccesses.push({
                         role_id: roleItem.role_id, 
                         add: false,

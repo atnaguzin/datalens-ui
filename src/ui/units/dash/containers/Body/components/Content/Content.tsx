@@ -115,10 +115,8 @@ const Content = ({
     const hideDashTitle = settings.hideDashTitle || (DL.IS_MOBILE && !isMobileFixedHeaderEnabled);
 
     const exportDashboard = async () => {
-        debugger;
-        
         const links = tabs
-            .map(item => item?.items[0]?.data?.tabs[0]?.chartId || '')
+            .map((item: any) => { item?.items[0]?.data?.tabs[0]?.chartId || '' })
             .filter(item=>item);
         const result = await Promise.allSettled(
             links.map((id: any) =>
