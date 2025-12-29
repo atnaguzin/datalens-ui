@@ -62,7 +62,7 @@ export const CollectionDialog = React.memo<Props>(
                 }
                 setProjects(results);
             })
-        });
+        }, []);
 
         const handleChange = React.useCallback(
             (params) => {
