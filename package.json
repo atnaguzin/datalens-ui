@@ -52,7 +52,8 @@
     "test:e2e:docker:logs": "cd ./tests && docker --log-level error compose -f ./docker-compose.e2e.yml logs --no-color",
     "test:e2e:docker:logs-nginx": "cd ./tests && docker --log-level error compose -f ./docker-compose.e2e.nginx.yml logs --no-color",
     "statoscope:validate-diff": "statoscope validate --input input.json --reference reference.json",
-    "statoscope:validate": "statoscope validate --input ./dist/public/build/stats.json"
+    "statoscope:validate": "statoscope validate --input ./dist/public/build/stats.json",
+    "build:image": "./build.sh"
   },
   "repository": {
     "type": "git",
