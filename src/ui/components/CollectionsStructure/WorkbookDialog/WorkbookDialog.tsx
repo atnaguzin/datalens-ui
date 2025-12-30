@@ -142,7 +142,8 @@ export const WorkbookDialog = React.memo<Props>(
                         <div className={b('title')}>{i18n('label_project')}</div>
 
                         <Select 
-                            defaultValue={[(values.project || [''])[0] || projectDefault]} 
+                            width={'max'}
+                            defaultValue={[values.project || projectDefault]} 
                             options={projects} 
                             onUpdate={
                                 (value: any) => handleChange({

@@ -163,10 +163,10 @@ export const CollectionContentTable = React.memo<Props>(
                                                 item.entity === CollectionItemEntities.ENTRY
                                             }
                                         />
+                                        <CollectionTitleCell item={item} />
                                         <div className={b('content-cell', {date: false})}>
                                             {item.projectId || ''}
                                         </div>
-                                        <CollectionTitleCell item={item} />
 
                                         <div className={b('content-cell', {date: true})}>
                                             {!nonInteractive && (
