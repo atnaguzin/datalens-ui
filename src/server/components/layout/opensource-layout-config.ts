@@ -75,7 +75,7 @@ export const getOpensourceLayoutConfig: GetLayoutConfig = async (args) => {
     const isRebrandingEnabled = req.ctx.get('isEnabledServerFeature')(Feature.EnableDLRebranding);
 
     // applying new favicon from rebranding
-    const faviconUrl = isRebrandingEnabled ? '/os-favicon.ico' : config.faviconUrl;
+    const faviconUrl = isRebrandingEnabled ? '/favicon-sc.ico' : config.faviconUrl;
 
     const tenantSettings: TenantSettings = {
         defaultColorPaletteId: res.locals.tenantDefaultColorPaletteId,

@@ -23,7 +23,7 @@ import {UserPanel} from './UserPanel/UserPanel';
 
 import defaultLogoIcon from 'ui/assets/icons/logo.svg';
 import iconCollection from 'ui/assets/icons/mono-collection.svg';
-import rebrandingLogoIcon from 'ui/assets/icons/os-logo.svg';
+import rebrandingLogoIcon from 'ui/assets/icons/logo-sc.svg';
 
 import '../MobileHeader.scss';
 

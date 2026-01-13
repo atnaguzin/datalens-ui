@@ -74,7 +74,7 @@ export const selectServerPalette = (args: {
     return availablePalettes?.[defaultColorPaletteId]?.scheme ?? [];
 };
 
-const SERVICE_NAME_DATALENS = 'DataLens';
+const SERVICE_NAME_DATALENS = 'BI СЦ';
 
 export {
     DASH_API_BASE_URL,

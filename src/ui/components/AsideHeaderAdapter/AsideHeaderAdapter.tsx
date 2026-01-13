@@ -31,7 +31,7 @@ import {ASIDE_HEADER_LOGO_ICON_SIZE} from './constants';
 
 import defaultLogoIcon from '../../assets/icons/logo.svg';
 import iconCollection from '../../assets/icons/mono-collection.svg';
-import rebrandingLogoIcon from '../../assets/icons/os-logo.svg';
+import rebrandingLogoIcon from '../../assets/icons/logo-sc.svg';
 
 import './AsideHeaderAdapter.scss';
 import { getSdk } from 'ui/libs/schematic-sdk';
